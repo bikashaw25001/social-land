@@ -43,6 +43,10 @@
   color: #bd0712;
 }
 
+.real-app .profile-settings-dialog > header b svg {
+  color: var(--social-primary, #e50b18);
+}
+
 .real-app .real-nav i {
   background: var(--social-primary);
 }
@@ -916,4 +920,66 @@
 .real-app.theme-dark .quiz-ready-button:hover {
   background: linear-gradient(135deg, #d72a35, #9f1823);
   color: #fff;
+}
+
+.real-app.theme-dark .real-sidebar > .brand > span:last-child {
+  color: #fff;
+}
+
+.real-app .group-add-privacy-trigger:hover,
+.real-app .group-add-privacy-trigger[aria-expanded="true"],
+.real-app .group-add-privacy-trigger:focus-visible {
+  border-color: var(--social-primary);
+  box-shadow: 0 0 0 3px #e50b1826;
+}
+
+.real-app .group-add-privacy-trigger > svg,
+.real-app .saved-account-action {
+  color: var(--social-primary);
+}
+
+.real-app .group-add-privacy-menu button:hover,
+.real-app .group-add-privacy-menu button.selected {
+  background: var(--social-primary-soft);
+}
+
+.real-app.theme-dark .group-add-privacy-menu button:hover,
+.real-app.theme-dark .group-add-privacy-menu button.selected {
+  background: #3b2025;
+}
+
+.real-app .profile-settings-group .verified-account-option {
+  border-color: #f0c7ca;
+  background: #fff7f7;
+}
+
+.real-app .profile-settings-group .verified-account-option b {
+  color: #382a2d;
+}
+
+.real-app .profile-settings-group .verified-account-option small {
+  color: #78676a;
+}
+
+.real-app.theme-dark .profile-settings-group .verified-account-option {
+  border-color: #53323a;
+  background: #261e24;
+}
+
+.real-app.theme-dark .profile-settings-group .verified-account-option b {
+  color: #f4eef1;
+}
+
+.real-app.theme-dark .profile-settings-group .verified-account-option small {
+  color: #c4b3b7;
+}
+
+.real-app .profile-password-forgot {
+  color: var(--social-primary);
+  font-weight: 600;
+}
+
+.real-app .profile-password-forgot:hover {
+  color: var(--social-primary-strong);
+  text-decoration: underline;
 }

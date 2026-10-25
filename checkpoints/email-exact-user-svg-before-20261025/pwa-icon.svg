@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Social Land</title>
+  <defs>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff3438"/>
+      <stop offset=".34" stop-color="#fa1018"/>
+      <stop offset=".72" stop-color="#e9000a"/>
+      <stop offset="1" stop-color="#ff211b"/>
+    </linearGradient>
+    <radialGradient id="shine" cx=".18" cy=".03" r=".86">
+      <stop offset="0" stop-color="#fff" stop-opacity=".43"/>
+      <stop offset=".25" stop-color="#ffb0a8" stop-opacity=".18"/>
+      <stop offset=".68" stop-color="#ff1720" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff8c83"/>
+      <stop offset=".2" stop-color="#ff2927"/>
+      <stop offset=".8" stop-color="#d60008"/>
+      <stop offset="1" stop-color="#ff574b"/>
+    </linearGradient>
+    <clipPath id="tile"><rect x="2" y="2" width="508" height="508" rx="108"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#tile)">
+    <rect x="2" y="2" width="508" height="508" fill="url(#red)"/>
+    <rect x="2" y="2" width="508" height="508" fill="url(#shine)"/>
+    <path d="M0 390c122-30 265-27 512-116v238H0Z" fill="#9e0008" opacity=".12"/>
+    <rect x="3" y="3" width="506" height="506" rx="107" fill="none" stroke="url(#edge)" stroke-width="6"/>
+
+    <g fill="#fff">
+      <path fill-rule="evenodd" d="M256 102c-16 0-22 18-27 37l-18 59c-5 16-15 26-31 31l-59 18c-19 6-37 12-37 28s18 23 37 28l59 18c16 5 26 15 31 31l18 59c5 19 11 37 27 37s22-18 27-37l18-59c5-16 15-26 31-31l59-18c19-5 37-12 37-28s-18-22-37-28l-59-18c-16-5-26-15-31-31l-18-59c-5-19-11-37-27-37Zm0 36c5 0 7 6 9 14l17 53c6 20 21 35 41 41l53 16c6 2 11 4 11 7s-5 5-11 7l-53 16c-20 6-35 21-41 41l-17 53c-2 8-4 14-9 14s-7-6-9-14l-17-53c-6-20-21-35-41-41l-53-16c-6-2-11-4-11-7s5-5 11-7l53-16c20-6 35-21 41-41l17-53c2-8 4-14 9-14Z"/>
+      <rect x="362" y="94" width="29" height="98" rx="14.5"/>
+      <rect x="327" y="128.5" width="99" height="29" rx="14.5"/>
+      <path fill-rule="evenodd" d="M147 323a46 46 0 1 1 0 92 46 46 0 0 1 0-92Zm0 23a23 23 0 1 0 0 46 23 23 0 0 0 0-46Z"/>
+    </g>
+  </g>
+</svg>

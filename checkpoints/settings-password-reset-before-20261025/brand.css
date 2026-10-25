@@ -1,0 +1,971 @@
+:root {
+  --purple: #e50b18;
+  --purple-dark: #bf0712;
+  --soft-purple: #fff0f1;
+  --social-primary: #e50b18;
+  --social-primary-strong: #bf0712;
+  --social-primary-soft: #fff0f1;
+  accent-color: var(--social-primary);
+}
+
+::selection {
+  color: #fff;
+  background: var(--social-primary);
+}
+
+.real-app .brand-mark,
+.auth-page .brand-mark,
+.auth-loading .brand-mark {
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+}
+
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.real-app {
+  --purple: #e50b18;
+  --purple-dark: #bf0712;
+  --soft-purple: #fff0f1;
+  --social-primary: #e50b18;
+  --social-primary-strong: #bf0712;
+  --social-primary-soft: #fff0f1;
+  accent-color: var(--social-primary);
+}
+
+.real-app .real-nav.active {
+  background: #fff0f1;
+  color: #bd0712;
+}
+
+.real-app .real-nav i {
+  background: var(--social-primary);
+}
+
+.real-app .real-button:not(.outline) {
+  background: var(--social-primary);
+}
+
+.real-app .real-button:not(.outline):hover {
+  background: var(--social-primary-strong);
+}
+
+.real-app .real-button.outline {
+  border-color: #f0bdc1;
+  color: var(--social-primary-strong);
+}
+
+.real-app .real-button.outline:hover {
+  background: #fff2f3;
+}
+
+.real-app .real-icon.theme-toggle,
+.real-app .profile-section-tabs button.active,
+.real-app .profile-mention,
+.real-app .chat-list-profile-link:hover {
+  color: var(--social-primary-strong);
+}
+
+.real-app .real-message.mine {
+  background: #e50b18;
+  color: #fff;
+}
+
+.real-app .profile-section-tabs button.active:after {
+  background: var(--social-primary);
+}
+
+.real-app .profile-page .profile-section-empty > svg {
+  color: var(--social-primary);
+}
+
+.real-app .profile-section-tabs button.active .profile-tab-count {
+  background: #ffe1e3;
+  color: #bd0712;
+}
+
+.auth-page .auth-submit {
+  background: var(--social-primary);
+  box-shadow: 0 4px 12px #e50b1833;
+}
+
+.auth-page .auth-submit:hover {
+  background: var(--social-primary-strong);
+}
+
+.auth-page .auth-forgot,
+.auth-page .auth-switch button {
+  color: var(--social-primary-strong);
+}
+
+.auth-page.auth-theme-dark .auth-form label>input:focus,
+.auth-page.auth-theme-dark .auth-form .username-field:focus-within,
+.auth-page.auth-theme-dark .auth-form .auth-password-input:focus-within {
+  border-color: var(--social-primary) !important;
+  box-shadow: 0 0 0 3px #e50b182b !important;
+}
+
+.real-app input:focus,
+.real-app textarea:focus,
+.auth-page .auth-form input:focus,
+.auth-page .auth-form textarea:focus {
+  border-color: var(--social-primary);
+  box-shadow: 0 0 0 3px #e50b181f;
+}
+
+.real-app.theme-dark .real-nav.active {
+  background: #3d2025;
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .real-button.outline {
+  border-color: #63323a;
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .real-button.outline:hover {
+  background: #332027;
+}
+
+.real-app.theme-dark .profile-section-tabs button.active {
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .profile-section-tabs button.active .profile-tab-count {
+  background: #4a252b;
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .real-message.mine {
+  background: #a91b27;
+  color: #fff;
+}
+
+.real-app.theme-dark input:focus,
+.real-app.theme-dark textarea:focus {
+  box-shadow: 0 0 0 3px #e50b182b;
+}
+
+.real-app .game-choice-card.selected,
+.real-app .game-choice-ludo.selected,
+.real-app .game-choice-tic-tac-toe.selected {
+  border-color: var(--social-primary);
+  background: var(--social-primary-soft);
+  box-shadow: 0 0 0 2px #e50b1822;
+}
+
+.real-app .game-choice-card.selected .game-choice-indicator {
+  color: var(--social-primary-strong);
+}
+
+.real-app .game-choice-card:focus-visible {
+  outline-color: var(--social-primary);
+}
+
+.real-app.theme-dark .game-choice-card.selected,
+.real-app.theme-dark .game-choice-ludo.selected,
+.real-app.theme-dark .game-choice-tic-tac-toe.selected {
+  border-color: #f04450;
+  background: #3b2025;
+  box-shadow: 0 0 0 2px #e50b1833;
+}
+
+.real-app.theme-dark .game-choice-card.selected .game-choice-indicator {
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .game-choice-card:focus-visible {
+  outline-color: #f04450;
+}
+
+/* Red brand accents across account screens and the signed-in app. */
+.auth-page .auth-kicker,
+.auth-page .auth-side-copy > span,
+.auth-page .auth-side-copy h2 em,
+.auth-page .auth-side-footer span,
+.auth-page .username-field > span,
+.auth-page .auth-password-input button:hover {
+  color: var(--social-primary-strong);
+}
+
+.auth-page .auth-art-ball {
+  background: linear-gradient(145deg, #ff4853, #bf0712);
+  box-shadow: 0 12px 19px #e50b1838;
+}
+
+.auth-page .auth-form label input:focus,
+.auth-page .username-field:focus-within,
+.auth-page .auth-password-input:focus-within {
+  border-color: var(--social-primary);
+  box-shadow: 0 0 0 3px #e50b1822;
+}
+
+.auth-page.auth-theme-dark .auth-kicker,
+.auth-page.auth-theme-dark .auth-side-copy > span,
+.auth-page.auth-theme-dark .auth-side-copy h2 em {
+  color: #ff9ba3;
+}
+
+.auth-page.auth-theme-dark .auth-form label input:focus,
+.auth-page.auth-theme-dark .username-field:focus-within,
+.auth-page.auth-theme-dark .auth-password-input:focus-within {
+  border-color: var(--social-primary);
+  box-shadow: 0 0 0 3px #e50b1833;
+}
+
+.real-app a,
+.real-app .real-heading h1 em,
+.real-app .real-hero > div:first-child > span,
+.real-app .real-hero h2 em,
+.real-app .real-box > header b i,
+.real-app .real-box > header button,
+.real-app .small-action,
+.real-app .real-empty b,
+.real-app .empty-illustration,
+.real-app .message-suggestion-heading b,
+.real-app .real-icon.theme-toggle,
+.real-app .suggestion-reason,
+.real-app .profile-security-card > header b svg,
+.real-app .profile-meta svg,
+.real-app .profile-loading-card > small,
+.real-app .profile-activities-tabs button.active,
+.real-app .assistant-chat-row > svg,
+.real-app .assistant-chat-row .assistant-label,
+.real-app .assistant-message-label {
+  color: var(--social-primary-strong);
+}
+
+.real-app .real-card-icon.purple,
+.real-app .assistant-entry > span {
+  background: var(--social-primary-soft);
+  color: var(--social-primary-strong);
+}
+
+.real-app .real-mobile-nav button.active,
+.real-app .assistant-entry > svg {
+  color: var(--social-primary);
+}
+
+.real-app .conversation.chosen {
+  background: var(--social-primary-soft);
+}
+
+.real-app .real-chat-row.selected,
+.real-app .real-chat-row.has-unread {
+  background: #fff0f1;
+}
+
+.real-app .real-chat-row.has-unread .chat-row-copy > b {
+  color: var(--social-primary-strong);
+}
+
+.real-app .real-hero {
+  background: #fff0f1;
+}
+
+.real-app .real-hero-art:before {
+  background: #e50b18;
+  box-shadow: 0 14px 20px #e50b1835;
+}
+
+.real-app .real-hero-art b {
+  background: #bf0712;
+}
+
+.real-app .profile-cover {
+  background: radial-gradient(circle at 12% 120%, #f6b3aa 0, transparent 38%),
+    radial-gradient(circle at 86% -20%, #ff9ba3 0, transparent 43%),
+    linear-gradient(120deg, #f4d8d2, #fff0f1 54%, #ddf0e6);
+}
+
+.real-app .story-add-button {
+  background: var(--social-primary);
+}
+
+.real-app .story-friend-picker > label input,
+.real-app .party-invite-picker > label input {
+  accent-color: var(--social-primary);
+}
+
+.real-app .story-audience-options > button.selected {
+  border-color: #f0bdc1;
+  background: #fff0f1;
+}
+
+.real-app .story-audience-options > button.selected .audience-radio {
+  border-color: var(--social-primary);
+}
+
+.real-app .story-edit-audience-link {
+  color: #ff9ba3;
+}
+
+.real-app .party-invite-picker > label:has(input:checked) {
+  border-color: var(--social-primary);
+  background: #e50b1814;
+}
+
+.real-app .party-chat-log > p.mine {
+  background: #e50b181c;
+}
+
+.real-app .party-chat-panel form button,
+.real-app .party-fullscreen-chat > form > button {
+  background: var(--social-primary);
+}
+
+.real-app .party-caption b,
+.real-app .party-fullscreen-chat-log > p > b {
+  color: #ff9ba3;
+}
+
+.real-app .watch-placeholder > span {
+  border-color: #e50b1840;
+  background: #e50b181c;
+  color: #ff9ba3;
+}
+
+.real-app .party-chat-panel form input:focus,
+.real-app .party-fullscreen-chat > form > input:focus {
+  border-color: var(--social-primary);
+  outline-color: var(--social-primary);
+}
+
+.real-app .conversation-time i {
+  color: var(--social-primary);
+}
+
+.real-app .profile-loading-spinner {
+  border-color: #e50b1828;
+  border-top-color: var(--social-primary);
+}
+
+.real-app .real-empty > svg,
+.real-app .reel-loading-spinner {
+  color: var(--social-primary);
+  border-top-color: var(--social-primary);
+}
+
+.real-app .composer-post-options > label > input {
+  accent-color: var(--social-primary);
+}
+
+.real-app .composer-file,
+.real-app .composer-kind,
+.real-app .composer-kind.selected,
+.real-app .profile-activities-tabs button.active {
+  color: var(--social-primary-strong);
+}
+
+.real-app .assistant-chat-row .assistant-label {
+  color: var(--social-primary-strong) !important;
+}
+
+.real-app .call-media-button:not(.off):not(.switch-video-button),
+.real-app .call-media-button.screen-share-button.active,
+.real-app .call-confirm-overlay button.accept-call,
+.real-app .incoming-call-actions .accept-video-call-button,
+.real-app .group-invite-request > div button:not(.group-invite-reject) {
+  border-color: var(--social-primary);
+  background: var(--social-primary);
+  color: #fff;
+}
+
+.real-app .call-media-button:not(.off):not(.switch-video-button):hover {
+  background: var(--social-primary-strong);
+}
+
+.real-app .call-media-button:focus-visible {
+  outline-color: #f04450;
+}
+
+.real-app .assistant-entry {
+  border-color: #f0bdc1;
+  background: linear-gradient(110deg, #fff0f1, #fff);
+}
+
+.real-app .assistant-entry:hover {
+  border-color: var(--social-primary);
+}
+
+.real-app .assistant-chat-row,
+.real-app .assistant-chat-row:hover {
+  border-color: #f0bdc1 !important;
+}
+
+.real-app .chat-view-once-toggle.selected,
+.real-app .chat-attachment-preview > .chat-view-once-toggle.selected {
+  border-color: var(--social-primary);
+  background: var(--social-primary-soft);
+  color: var(--social-primary-strong);
+}
+
+.real-app .chat-view-once-countdown-value {
+  stroke: var(--social-primary);
+}
+
+.real-app .quiz-score.current-player,
+.real-app .quiz-answer-grid > button.chosen {
+  border-color: var(--social-primary);
+  box-shadow: 0 0 0 2px #e50b1822;
+}
+
+.real-app .quiz-answer-grid > button.chosen {
+  background: linear-gradient(145deg, #8f111b, #5c171d);
+}
+
+.real-app .quiz-score > b,
+.real-app .quiz-answer-grid > button.chosen > i {
+  color: #ff9ba3;
+}
+
+.real-app .quiz-ready-symbol {
+  border-color: var(--social-primary);
+  background: #3b2025;
+  color: #ffb2b8;
+  box-shadow: 0 0 0 6px #e50b1822;
+}
+
+.real-app .quiz-ready-button {
+  border-color: var(--social-primary);
+  background: linear-gradient(135deg, #f04450, #bf0712);
+}
+
+.real-app .game2d-loading-spinner {
+  border-top-color: var(--social-primary);
+}
+
+.real-app .game-load-track i {
+  background: linear-gradient(90deg, #bf0712, #ff6670);
+}
+
+.real-app.theme-dark .conversation.chosen {
+  background: #3b2025;
+}
+
+.real-app.theme-dark .real-chat-row.selected,
+.real-app.theme-dark .real-chat-row.has-unread {
+  background: #3b2025;
+}
+
+.real-app.theme-dark .real-chat-row.has-unread .chat-row-copy > b {
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .real-hero {
+  background: #2a1d22;
+}
+
+.real-app.theme-dark .profile-cover {
+  background: radial-gradient(circle at 12% 120%, #8f363e 0, transparent 38%),
+    radial-gradient(circle at 86% -20%, #63323a 0, transparent 43%),
+    linear-gradient(120deg, #3b2529, #332027 54%, #26352e);
+}
+
+.real-app.theme-dark .story-audience-options > button.selected {
+  border-color: #63323a;
+  background: #3b2025;
+}
+
+.real-app.theme-dark .story-audience-options > button.selected .audience-radio {
+  border-color: #f04450;
+}
+
+.real-app.theme-dark .party-invite-picker > label:has(input:checked) {
+  border-color: #f04450;
+  background: #e50b1825;
+}
+
+.real-app.theme-dark .party-chat-log > p.mine {
+  background: #6e222b;
+}
+
+.real-app.theme-dark .party-fullscreen-chat-log > p.mine {
+  background: #e50b1842;
+  border-color: #f0445077;
+}
+
+.real-app.theme-dark .party-fullscreen-chat-log > p > b {
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .party-fullscreen-chat > form > input:focus {
+  border-color: #f04450;
+}
+
+.real-app.theme-dark .assistant-entry {
+  border-color: #63323a;
+  background: linear-gradient(110deg, #332027, #1c1b24);
+}
+
+.real-app.theme-dark .assistant-entry:hover {
+  border-color: #f04450;
+}
+
+.real-app.theme-dark .assistant-entry > span {
+  background: #4a252b;
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .assistant-entry > svg,
+.real-app.theme-dark .assistant-chat-row > svg,
+.real-app.theme-dark .assistant-chat-row .assistant-label,
+.real-app.theme-dark .assistant-message-label,
+.real-app.theme-dark .profile-activities-tabs button.active {
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .assistant-chat-row .assistant-label {
+  color: #ff9ba3 !important;
+}
+
+.real-app.theme-dark .assistant-chat-row,
+.real-app.theme-dark .assistant-chat-row:hover {
+  border-color: #63323a !important;
+}
+
+.real-app.theme-dark .chat-view-once-toggle.selected,
+.real-app.theme-dark .chat-attachment-preview > .chat-view-once-toggle.selected {
+  border-color: #f04450;
+  background: #3b2025;
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .quiz-answer-grid > button.chosen {
+  border-color: #f04450;
+  background: linear-gradient(145deg, #6e222b, #3b2025);
+}
+
+.real-app.theme-dark .quiz-ready-button {
+  border-color: #f04450;
+  background: linear-gradient(135deg, #d72a35, #9f1823);
+}
+
+.real-app.theme-dark .real-mobile-nav button.active {
+  color: #ff9ba3;
+}
+
+/* Finish the red accent pass for messaging, games, and Watch Together. */
+.real-app .real-thread-head > div button,
+.real-app .real-chat-title button,
+.real-app .group-create-form > button,
+.real-app .chat-details-panel button.group-add-submit,
+.real-app .chat-game-invite button,
+.real-app .real-compose > button:not(.chat-attach-button),
+.real-app .live-chat-panel > form > button,
+.real-app .live-join-request > button,
+.real-app .story-engagement > form button,
+.real-app .post-comments form button,
+.real-app .party-fullscreen-chat > form > button,
+.real-app .game-text-chat > form > button {
+  border-color: var(--social-primary);
+  background: var(--social-primary);
+  color: #fff;
+}
+
+.real-app .real-compose > button:not(.chat-attach-button):hover,
+.real-app .real-thread-head > div button:hover,
+.real-app .real-chat-title button:hover,
+.real-app .group-create-form > button:not(:disabled):hover,
+.real-app .chat-details-panel button.group-add-submit:hover,
+.real-app .chat-game-invite button:hover,
+.real-app .live-chat-panel > form > button:hover,
+.real-app .live-join-request > button:hover,
+.real-app .story-engagement > form button:hover,
+.real-app .post-comments form button:hover,
+.real-app .party-fullscreen-chat > form > button:hover,
+.real-app .game-text-chat > form > button:hover {
+  border-color: var(--social-primary-strong);
+  background: var(--social-primary-strong);
+  color: #fff;
+}
+
+.real-app .real-compose .chat-attach-button {
+  border-color: #f0bdc1;
+  background: #fff7f7;
+  color: var(--social-primary-strong);
+}
+
+.real-app .real-compose .chat-attach-button:hover,
+.real-app .chat-attach-options button:hover,
+.real-app .chat-back-button,
+.real-app .reply-compose-preview button,
+.real-app .message-action-menu button:hover,
+.real-app .chat-row-menu button:hover {
+  background: var(--social-primary-soft);
+  color: var(--social-primary-strong);
+}
+
+.real-app .chat-attach-options label > svg,
+.real-app .chat-attach-options button > svg,
+.real-app .reply-compose-preview button,
+.real-app .live-location-own button,
+.real-app .live-location-map-button,
+.real-app .blocked-unblock-button,
+.real-app .share-chat-list > button,
+.real-app .group-message-sender,
+.real-app .story-message-context small,
+.real-app .party-source-note a {
+  color: var(--social-primary-strong);
+}
+
+.real-app .live-location-map-button,
+.real-app .live-location-stop-button,
+.real-app .chat-details-panel button.group-add-submit {
+  border-color: var(--social-primary);
+  background: var(--social-primary);
+  color: #fff;
+}
+
+.real-app .party-fullscreen-chat-hide:hover,
+.real-app .party-fullscreen-chat-show:hover {
+  border-color: #f04450;
+  background: #e50b1840;
+  color: #fff;
+}
+
+.real-app .party-invite-toggle[aria-expanded="true"] {
+  border-color: var(--social-primary);
+  color: var(--social-primary-strong);
+}
+
+.real-app .chat-details-panel .chat-appearance-setting {
+  border-color: #f0bdc1;
+  background: linear-gradient(115deg, #fff0f1, #fff9f9);
+  color: var(--social-primary-strong);
+}
+
+.real-app .shared-media-panel button:hover {
+  border-color: #f0bdc1;
+  background: var(--social-primary-soft);
+  color: var(--social-primary-strong);
+}
+
+.real-app .chat-details-panel button:hover,
+.real-app .chat-settings-close:hover,
+.real-app .share-post-dialog > footer button:last-child {
+  border-color: var(--social-primary);
+  background: var(--social-primary-soft);
+  color: var(--social-primary-strong);
+}
+
+.real-app .chat-details-panel button:not(.chat-settings-close):not(.delete-chat-action):not(.leave-group-action) {
+  color: var(--social-primary-strong);
+}
+
+.real-app .share-post-dialog > footer button:last-child {
+  background: var(--social-primary);
+  color: #fff;
+}
+
+.real-app .share-post-dialog > footer button:last-child:hover {
+  background: var(--social-primary-strong);
+  color: #fff;
+}
+
+.real-app .group-add-privacy-menu button > svg,
+.real-app .profile-stats > button:hover > b,
+.real-app .username-suggestions button,
+.real-app .profile-post-menu button svg,
+.real-app .shared-media-panel button {
+  color: var(--social-primary-strong);
+}
+
+.real-app .post-actions button:hover,
+.real-app .post-comment-menu > button:hover,
+.real-app .post-comment-menu > button[aria-expanded="true"],
+.real-app .call-window-tools button:hover,
+.real-app .profile-settings-nav button:hover,
+.real-app .profile-settings-button:hover {
+  border-color: #f0bdc1;
+  background: var(--social-primary-soft);
+  color: var(--social-primary-strong);
+}
+
+.real-app .profile-settings-nav button.active,
+.real-app .profile-email-target > button.active,
+.real-app .activity-filters > button.active,
+.real-app .post-filter-list > button.selected,
+.real-app .live-filter-picker button.selected,
+.real-app .activity-item.activity-pending-request > div > button,
+.real-app .post-video-preview-controls > button,
+.real-app .reconnect-friend-button {
+  border-color: var(--social-primary);
+  background: linear-gradient(135deg, #f04450, #bf0712);
+  color: #fff;
+}
+
+.real-app .reconnect-friend-button:hover {
+  border-color: var(--social-primary-strong);
+  background: linear-gradient(135deg, #d72a35, #9f1823);
+  color: #fff;
+}
+
+.real-app .game-live-actions button[aria-pressed="true"],
+.real-app .game-live-actions .game-voice-join,
+.real-app .game-live-actions button.exit,
+.real-app .game2d-dice-button,
+.real-app .game-active-board > .real-game-board > button,
+.real-app .quiz-ready-button {
+  border-color: var(--social-primary);
+  background: linear-gradient(135deg, #f04450, #bf0712);
+  color: #fff;
+}
+
+.real-app .game-live-actions button.exit:hover,
+.real-app .game-live-actions .game-voice-join:hover,
+.real-app .game2d-dice-button:hover,
+.real-app .game-active-board > .real-game-board > button:not(:disabled):hover,
+.real-app .quiz-ready-button:hover {
+  border-color: var(--social-primary-strong);
+  background: linear-gradient(135deg, #d72a35, #9f1823);
+  color: #fff;
+}
+
+.real-app .game-live-actions button:hover,
+.real-app .game-live-actions button:focus-visible,
+.real-app .quiz-answer-grid > button:not(:disabled):hover,
+.real-app .game2d-tic-board > button:not(:disabled):hover {
+  border-color: var(--social-primary);
+  background: var(--social-primary-soft);
+  color: var(--social-primary-strong);
+}
+
+.real-app .game2d-tic-board > button.mark-o {
+  color: #dd816b;
+}
+
+.real-app .game2d-tic-board > button:not(.mark-o) {
+  color: var(--social-primary-strong);
+}
+
+.real-app .game-live-actions button[aria-pressed="true"]:hover {
+  background: var(--social-primary-strong);
+  color: #fff;
+}
+
+.real-app .game-chat-log p.mine {
+  background: #e50b1820;
+}
+
+.real-app .game-chat-log p b,
+.real-app .party-caption b {
+  color: var(--social-primary-strong);
+}
+
+.real-app .live-chat-messages article.mine {
+  border-color: #f0445066;
+  background: #e50b1840;
+}
+
+.real-app .party-fullscreen-chat-log > p.mine {
+  border-color: #f0445066;
+  background: #e50b1833;
+}
+
+.real-app .live-chat-messages article > b {
+  color: #ff9ba3;
+}
+
+.real-app .party-chat-mini-pop > b {
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .real-compose .chat-attach-button,
+.real-app.theme-dark .chat-back-button {
+  border-color: #63323a;
+  background: #3b2025;
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .real-thread-head > div button,
+.real-app.theme-dark .real-chat-title button {
+  border-color: #63323a;
+  background: #302126;
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .real-thread-head > div button:hover,
+.real-app.theme-dark .real-chat-title button:hover,
+.real-app.theme-dark .real-compose .chat-attach-button:hover,
+.real-app.theme-dark .chat-attach-options button:hover,
+.real-app.theme-dark .message-action-menu button:hover,
+.real-app.theme-dark .chat-row-menu button:hover {
+  background: #3b2025;
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .chat-attach-options label > svg,
+.real-app.theme-dark .chat-attach-options button > svg,
+.real-app.theme-dark .reply-compose-preview button,
+.real-app.theme-dark .live-location-own button,
+.real-app.theme-dark .live-location-map-button,
+.real-app.theme-dark .blocked-unblock-button,
+.real-app.theme-dark .share-chat-list > button,
+.real-app.theme-dark .group-message-sender,
+.real-app.theme-dark .story-message-context small {
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .group-add-privacy-menu button > svg,
+.real-app.theme-dark .profile-stats > button:hover > b,
+.real-app.theme-dark .username-suggestions button,
+.real-app.theme-dark .profile-post-menu button svg,
+.real-app.theme-dark .activity-panel button:not(.real-button),
+.real-app.theme-dark .activity-item button {
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .post-actions button:hover,
+.real-app.theme-dark .post-comment-menu > button:hover,
+.real-app.theme-dark .post-comment-menu > button[aria-expanded="true"],
+.real-app.theme-dark .call-window-tools button:hover,
+.real-app.theme-dark .profile-settings-nav button:hover,
+.real-app.theme-dark .profile-settings-button:hover {
+  border-color: #63323a;
+  background: #3b2025;
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .profile-settings-nav button.active,
+.real-app.theme-dark .profile-email-target > button.active,
+.real-app.theme-dark .activity-filters > button.active,
+.real-app.theme-dark .post-filter-list > button.selected,
+.real-app.theme-dark .live-filter-picker button.selected,
+.real-app.theme-dark .activity-item.activity-pending-request > div > button,
+.real-app.theme-dark .post-video-preview-controls > button,
+.real-app.theme-dark .reconnect-friend-button {
+  border-color: #f04450;
+  background: linear-gradient(135deg, #d72a35, #9f1823);
+  color: #fff;
+}
+
+.real-app.theme-dark .incoming-call-actions .accept-video-call-button,
+.real-app.theme-dark .group-invite-request > div button:not(.group-invite-reject) {
+  border-color: #f04450;
+  background: linear-gradient(135deg, #d72a35, #9f1823);
+  color: #fff;
+}
+
+.real-app.theme-dark .live-location-map-button,
+.real-app.theme-dark .live-location-stop-button {
+  border-color: #f04450;
+  background: linear-gradient(135deg, #d72a35, #9f1823);
+  color: #fff;
+}
+
+.real-app .real-chat-title > button.chat-new-group-toggle {
+  border-color: #e50b18 !important;
+  background: #e50b18 !important;
+  color: #fff !important;
+  box-shadow: 0 5px 13px #e50b1838;
+}
+
+.real-app .real-chat-title > button.chat-new-group-toggle:hover {
+  border-color: #bf0712 !important;
+  background: #bf0712 !important;
+}
+
+.real-app.theme-dark .game-chat-log p.mine {
+  background: #6e222b;
+}
+
+.real-app.theme-dark .game-chat-log p b,
+.real-app.theme-dark .party-caption b,
+.real-app.theme-dark .party-chat-mini-pop > b {
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .chat-details-panel .chat-appearance-setting {
+  border-color: #63323a;
+  background: linear-gradient(115deg, #3b2025, #292025);
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .game-live-actions button[aria-pressed="true"],
+.real-app.theme-dark .game-live-actions .game-voice-join,
+.real-app.theme-dark .game-live-actions button.exit,
+.real-app.theme-dark .game2d-dice-button,
+.real-app.theme-dark .game-active-board > .real-game-board > button,
+.real-app.theme-dark .quiz-ready-button {
+  border-color: #f04450;
+  background: linear-gradient(135deg, #d72a35, #9f1823);
+  color: #fff;
+}
+
+.real-app.theme-dark .game-live-actions button:hover,
+.real-app.theme-dark .game-live-actions button:focus-visible,
+.real-app.theme-dark .quiz-answer-grid > button:not(:disabled):hover,
+.real-app.theme-dark .game2d-tic-board > button,
+.real-app.theme-dark .game2d-tic-board > button:not(:disabled):hover {
+  border-color: #f04450;
+  background: #3b2025;
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .game-live-actions button[aria-pressed="true"]:hover,
+.real-app.theme-dark .game-live-actions .game-voice-join:hover,
+.real-app.theme-dark .game-live-actions button.exit:hover,
+.real-app.theme-dark .game2d-dice-button:hover,
+.real-app.theme-dark .game-active-board > .real-game-board > button:not(:disabled):hover,
+.real-app.theme-dark .quiz-ready-button:hover {
+  background: linear-gradient(135deg, #d72a35, #9f1823);
+  color: #fff;
+}
+
+.real-app.theme-dark .real-sidebar > .brand > span:last-child {
+  color: #fff;
+}
+
+.real-app .group-add-privacy-trigger:hover,
+.real-app .group-add-privacy-trigger[aria-expanded="true"],
+.real-app .group-add-privacy-trigger:focus-visible {
+  border-color: var(--social-primary);
+  box-shadow: 0 0 0 3px #e50b1826;
+}
+
+.real-app .group-add-privacy-trigger > svg,
+.real-app .saved-account-action {
+  color: var(--social-primary);
+}
+
+.real-app .group-add-privacy-menu button:hover,
+.real-app .group-add-privacy-menu button.selected {
+  background: var(--social-primary-soft);
+}
+
+.real-app.theme-dark .group-add-privacy-menu button:hover,
+.real-app.theme-dark .group-add-privacy-menu button.selected {
+  background: #3b2025;
+}
+
+.real-app .profile-settings-group .verified-account-option {
+  border-color: #f0c7ca;
+  background: #fff7f7;
+}
+
+.real-app .profile-settings-group .verified-account-option b {
+  color: #382a2d;
+}
+
+.real-app .profile-settings-group .verified-account-option small {
+  color: #78676a;
+}
+
+.real-app.theme-dark .profile-settings-group .verified-account-option {
+  border-color: #53323a;
+  background: #261e24;
+}
+
+.real-app.theme-dark .profile-settings-group .verified-account-option b {
+  color: #f4eef1;
+}
+
+.real-app.theme-dark .profile-settings-group .verified-account-option small {
+  color: #c4b3b7;
+}

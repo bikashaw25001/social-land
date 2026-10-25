@@ -38,12 +38,14 @@ For production, build with `npm run build`, set `NODE_ENV=production`, configure
 - Registration creates a MongoDB ObjectId account ID, unique username, and a password hash. Login accepts the email or username.
 - People search is by display name or username. Friend requests must be accepted before a direct chat can be created.
 - Direct messages are stored in MongoDB and delivered live through Socket.IO.
-- Calls use WebRTC media streams with a public STUN server. Camera and microphone are requested after starting or accepting a call.
+- Calls use WebRTC media streams, ICE candidate buffering, and automatic ICE restart after a failed or interrupted connection. Camera and microphone are requested after starting or accepting a call.
 - Tic-tac-toe moves and watch-room play, pause, and seek controls are relayed through an authenticated conversation.
 - Watch rooms currently accept direct HTTPS media URLs playable by the browser (for example MP4 files). YouTube and subscription services need their authorized player integrations.
 
 ## Before public launch
 
-This is a functional first milestone, not a hardened public service. Configure trusted production HTTPS, a TURN service for calls across restrictive networks, email verification, moderation and abuse reporting, message retention controls, automated backups, and production monitoring before inviting the public. Chat content is not end-to-end encrypted in this version.
+For reliable voice and video calls across mobile carriers and restrictive NATs, configure a Coturn service. Set `TURN_URLS` to its `turn:`/`turns:` URLs and set `TURN_SHARED_SECRET` to the same secret as Coturn's `static-auth-secret` while Coturn has `use-auth-secret` enabled. The API issues short-lived credentials to signed-in users; the shared secret stays on the server. Open the TURN listener and configured relay port range in the host firewall/security group. STUN-only calls can still fail on networks that block peer-to-peer media, so a TURN relay is required for those networks.
+
+This is a functional first milestone, not a hardened public service. Configure trusted production HTTPS, TURN, email verification, moderation and abuse reporting, message retention controls, automated backups, and production monitoring before inviting the public. Chat content is not end-to-end encrypted in this version.
 "# social-land" 
 "# social-land" 

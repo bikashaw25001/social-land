@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { createHash, randomBytes, randomInt, randomUUID } from 'node:crypto'
+import { createHash, createHmac, randomBytes, randomInt, randomUUID } from 'node:crypto'
 import multer from 'multer'
 import nodemailer from 'nodemailer'
 import helmet from 'helmet'
@@ -24,6 +24,10 @@ const server = http.createServer(app)
 const io = new Server(server, { cors: { origin: process.env.NODE_ENV === 'production' ? (process.env.CLIENT_ORIGIN || 'http://localhost:5173') : true, credentials: true } })
 const PORT = Number(process.env.PORT || 3001)
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-change-me-before-deploying'
+const callStunUrls = ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302', 'stun:stun3.l.google.com:19302', 'stun:stun4.l.google.com:19302']
+const callTurnUrls = String(process.env.TURN_URLS || '').split(',').map(url => url.trim()).filter(url => /^turns?:/i.test(url))
+const callTurnSharedSecret = String(process.env.TURN_SHARED_SECRET || '')
+const callTurnCredentialTtlSeconds = Math.min(86400, Math.max(300, Number(process.env.TURN_CREDENTIAL_TTL_SECONDS) || 3600))
 let dbReady = false
 void warmContentModeration().then(() => console.log('Content moderation model ready')).catch(error => console.error('Content moderation model could not be loaded:', error.message))
 
@@ -50,6 +54,7 @@ const chatMimeForFile = file => allowedChatFiles.has(file.mimetype) ? file.mimet
 const chatUpload = multer({ storage: multer.diskStorage({ destination: chatUploadsDir, filename: (_req, file, cb) => cb(null, `${randomUUID()}.${allowedChatFiles.get(chatMimeForFile(file)) || 'bin'}`) }), limits: { fileSize: 50 * 1024 * 1024 }, fileFilter: (_req, file, cb) => { const supported = !!chatMimeForFile(file); cb(supported ? null : new Error('Upload a supported chat file (JPG, PNG, WebP, MP4, WebM, PDF, Office, TXT, CSV, or ZIP).'), supported) } })
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 35, standardHeaders: 'draft-8', legacyHeaders: false }))
 const passwordResetLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 5, standardHeaders: 'draft-8', legacyHeaders: false })
+const callIceConfigLimit = rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false })
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true, lowercase: true, minlength: 3, maxlength: 24 },
@@ -464,7 +469,7 @@ const createDeviceLogin = async (user, req) => {
   if (!knownDevice && mailTransport) {
     const when = new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' }) + ' UTC'
     const text = `A new device signed in to your Social Land account.\n\nDevice: ${details.deviceName}\nApproximate location: ${details.location}\nTime: ${when}\n\nIf this was not you, change your password and log out of unfamiliar devices in Settings > Security.`
-    void mailTransport.sendMail({ from: process.env.EMAIL_FROM || 'Social Land <' + process.env.GMAIL_USER + '>', to: user.email, subject: 'New device login to Social Land', text, html: `<div style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:24px;color:#211d31"><h2>New device login</h2><p>A device signed in to your Social Land account.</p><p><b>Device:</b> ${details.deviceName}<br/><b>Approximate location:</b> ${details.location}<br/><b>Time:</b> ${when}</p><p>If this was not you, change your password and log out of unfamiliar devices in Settings &gt; Security.</p></div>` }).catch(error => console.error('Could not send new-device login alert:', error.message))
+    void mailTransport.sendMail({ from: process.env.EMAIL_FROM || 'Social Land <' + process.env.GMAIL_USER + '>', to: user.email, subject: 'New device login to Social Land', text, ...buildBrandedEmail({ eyebrow: 'ACCOUNT SECURITY', preheader: 'A new device signed in to your account.', title: 'New sign-in detected', intro: 'A device signed in to your Social Land account.', details: [{ label: 'Device', value: details.deviceName }, { label: 'Approximate location', value: details.location }, { label: 'Time', value: when }], note: 'If this was not you, change your password and log out of unfamiliar devices in Settings > Security.', text }), }).catch(error => console.error('Could not send new-device login alert:', error.message))
   }
   return { token: jwt.sign({ sub: user._id.toString(), ver: user.sessionVersion || 0, sid: sessionId }, JWT_SECRET, { expiresIn: '7d' }), newDevice: !knownDevice }
 }
@@ -555,7 +560,7 @@ app.post('/api/auth/login', dbOnly, handle(async (req, res) => {
         to: user.email,
         subject: 'Your Social Land sign-in verification code',
         text: 'Your Social Land sign-in code is ' + code + '. Enter it within 10 minutes to finish signing in. If you did not try to sign in, change your password.',
-        html: '<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;color:#211d31"><h2>Finish signing in to Social Land</h2><p>Enter this six-digit code to continue:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px;padding:16px;background:#f1effa;border-radius:12px;text-align:center">' + code + '</p><p>This code expires in 10 minutes. If you did not try to sign in, change your password.</p></div>',
+        ...buildBrandedEmail({ eyebrow: 'ACCOUNT SECURITY', preheader: 'Use your Social Land sign-in code to continue.', title: 'Finish signing in', intro: 'Enter this six-digit code to continue.', code, codeLabel: 'SIGN-IN CODE', note: 'This code expires in 10 minutes. If you did not try to sign in, change your password.', text: 'Your Social Land sign-in code is ' + code + '. Enter it within 10 minutes to finish signing in. If you did not try to sign in, change your password.' }),
       })
     } catch (error) {
       user.twoStepLoginChallengeHash = undefined
@@ -573,6 +578,18 @@ app.post('/api/auth/login', dbOnly, handle(async (req, res) => {
 const mailTransport = process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD
   ? nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD.replace(/\s+/g, '') } })
   : null
+const emailHtmlEscape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character])
+const buildBrandedEmail = ({ preheader, eyebrow = 'YOUR PEOPLE, TOGETHER', title, intro, code, codeLabel = 'YOUR VERIFICATION CODE', details = [], note, text }) => {
+  const detailRows = details.map(({ label, value }) => `<tr><td style="padding:9px 12px;border-bottom:1px solid #eceef2;color:#747887;font-size:13px">${emailHtmlEscape(label)}</td><td align="right" style="padding:9px 12px;border-bottom:1px solid #eceef2;color:#292c35;font-size:13px;font-weight:600">${emailHtmlEscape(value)}</td></tr>`).join('')
+  const codeBlock = code ? `<tr><td style="padding:22px 0 18px"><div style="padding:19px 12px;border:1px solid #ffd5d8;border-radius:14px;background:#fff3f4;text-align:center"><div style="margin-bottom:9px;color:#a5525a;font-size:10px;font-weight:700;letter-spacing:1.6px">${emailHtmlEscape(codeLabel)}</div><div dir="ltr" style="color:#c80b17;font-size:34px;font-weight:800;letter-spacing:9px;line-height:1.2">${emailHtmlEscape(code)}</div></div></td></tr>` : ''
+  const detailBlock = detailRows ? `<tr><td style="padding:16px 0 2px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eceef2;border-radius:12px;border-collapse:separate;border-spacing:0;overflow:hidden">${detailRows}</table></td></tr>` : ''
+  const noteBlock = note ? `<tr><td style="padding:16px 0 0;color:#747887;font-size:13px;line-height:1.65">${emailHtmlEscape(note)}</td></tr>` : ''
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${emailHtmlEscape(title)}</title></head><body style="margin:0;padding:0;background:#f3f4f7;color:#252832;font-family:Arial,Helvetica,sans-serif"><div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${emailHtmlEscape(preheader || intro || title)}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;background:#f3f4f7"><tr><td align="center" style="padding:34px 14px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:540px;border:1px solid #e7e8ed;border-radius:18px;background:#fff"><tr><td height="5" style="height:5px;border-radius:18px 18px 0 0;background:#e50b18;font-size:0;line-height:0">&nbsp;</td></tr><tr><td style="padding:27px 30px 30px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td style="padding-bottom:26px"><div style="color:#242630;font-size:16px;font-weight:800;letter-spacing:-.3px">Social Land</div><div style="padding-top:4px;color:#888b96;font-size:11px">Your people, together.</div></td></tr><tr><td style="padding:0 0 8px;color:#cf101c;font-size:10px;font-weight:700;letter-spacing:1.7px">${emailHtmlEscape(eyebrow)}</td></tr><tr><td style="padding:0 0 10px;color:#20222a;font-size:25px;font-weight:750;letter-spacing:-.6px;line-height:1.25">${emailHtmlEscape(title)}</td></tr><tr><td style="color:#626672;font-size:14px;line-height:1.65">${emailHtmlEscape(intro)}</td></tr>${codeBlock}${detailBlock}${noteBlock}<tr><td style="padding-top:24px"><div style="height:1px;background:#eceef2;font-size:0;line-height:0">&nbsp;</div></td></tr><tr><td style="padding-top:15px;color:#9295a0;font-size:11px;line-height:1.6">This is an automated message from Social Land. Please don’t reply to this email.</td></tr></table></td></tr></table><div style="padding-top:18px;color:#9a9ca5;font-size:11px">&copy; Social Land</div></td></tr></table></body></html>`
+  return {
+    text: text || [title, intro, code ? `${codeLabel}: ${code}` : '', details.map(item => `${item.label}: ${item.value}`).join('\n'), note].filter(Boolean).join('\n\n'),
+    html,
+  }
+}
 const hashResetToken = token => createHash('sha256').update(token).digest('hex')
 app.post('/api/auth/verify-login-code', passwordResetLimit, dbOnly, handle(async (req, res) => {
   const challengeToken = String(req.body?.challengeToken || '')
@@ -612,7 +629,7 @@ app.post('/api/auth/register/send-code', registrationCodeLimit, dbOnly, handle(a
   const code = String(randomInt(100000, 1000000))
   await EmailVerification.findOneAndUpdate({ email }, { $set: { codeHash: hashResetToken(code), attempts: 0, expiresAt: new Date(Date.now() + 10 * 60 * 1000), verifiedAt: null } }, { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true })
   try {
-    await mailTransport.sendMail({ from: process.env.EMAIL_FROM || 'Social Land <' + process.env.GMAIL_USER + '>', to: email, subject: 'Verify your Social Land email', text: 'Your Social Land verification code is ' + code + '. Enter it within 10 minutes to finish creating your account.', html: '<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;color:#211d31"><h2>Verify your Social Land email</h2><p>Enter this code to finish creating your account:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px;padding:16px;background:#f1effa;border-radius:12px;text-align:center">' + code + '</p><p>This code expires in 10 minutes.</p></div>' })
+    await mailTransport.sendMail({ from: process.env.EMAIL_FROM || 'Social Land <' + process.env.GMAIL_USER + '>', to: email, subject: 'Verify your Social Land email', text: 'Your Social Land verification code is ' + code + '. Enter it within 10 minutes to finish creating your account.', ...buildBrandedEmail({ eyebrow: 'WELCOME TO SOCIAL LAND', preheader: 'Use your email verification code to finish creating your account.', title: 'Verify your email', intro: 'Enter this code to finish creating your Social Land account.', code, codeLabel: 'EMAIL VERIFICATION CODE', note: 'This code expires in 10 minutes.', text: 'Your Social Land verification code is ' + code + '. Enter it within 10 minutes to finish creating your account.' }) })
   } catch (error) { await EmailVerification.deleteOne({ email }); throw error }
   res.json({ ok: true })
 }))
@@ -660,7 +677,7 @@ app.post('/api/auth/forgot-password', passwordResetLimit, dbOnly, handle(async (
       to: user.email,
       subject: 'Your Social Land password reset code',
       text: 'Your Social Land password reset code is ' + code + '. Enter it in the app within 10 minutes. If you did not request this, you can ignore this email.',
-      html: '<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;color:#211d31"><h2>Reset your Social Land password</h2><p>Enter this code in the app to choose a new password:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px;padding:16px;background:#f1effa;border-radius:12px;text-align:center">' + code + '</p><p>This code expires in 10 minutes. If you did not request it, you can ignore this email.</p></div>',
+      ...buildBrandedEmail({ eyebrow: 'ACCOUNT SECURITY', preheader: 'Use your password reset code to continue.', title: 'Reset your password', intro: 'Enter this code in Social Land to choose a new password.', code, codeLabel: 'PASSWORD RESET CODE', note: 'This code expires in 10 minutes. If you did not request it, you can ignore this email.', text: 'Your Social Land password reset code is ' + code + '. Enter it in the app within 10 minutes. If you did not request this, you can ignore this email.' }),
     })
   } catch (error) {
     user.passwordResetCodeHash = undefined
@@ -758,7 +775,7 @@ app.post('/api/me/alternate-email/send-code', auth, passwordResetLimit, handle(a
       to: email,
       subject: 'Verify your alternate Social Land email',
       text: 'Your Social Land email verification code is ' + code + '. Enter it in the app within 10 minutes to add this email to your account.',
-      html: '<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;color:#211d31"><h2>Verify your alternate email</h2><p>Enter this code in Social Land to add this email to your account:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px;padding:16px;background:#f1effa;border-radius:12px;text-align:center">' + code + '</p><p>This code expires in 10 minutes.</p></div>',
+      ...buildBrandedEmail({ eyebrow: 'ACCOUNT SECURITY', preheader: 'Confirm this email address for your account.', title: 'Verify your alternate email', intro: 'Enter this code in Social Land to add this email to your account.', code, codeLabel: 'EMAIL VERIFICATION CODE', note: 'This code expires in 10 minutes.', text: 'Your Social Land email verification code is ' + code + '. Enter it in the app within 10 minutes to add this email to your account.' }),
     })
   } catch (error) {
     user.alternateEmailPending = ''
@@ -962,6 +979,18 @@ app.post('/api/conversations/:id/assistant', auth, assistantChatLimit, handle(as
   }
 }))
 app.get('/api/me', auth, (req, res) => res.json({ user: publicProfileUser(req.user), groupAddPrivacy: req.user.groupAddPrivacy || 'anyone', messagePrivacy: req.user.messagePrivacy || 'friends', lastSeenPrivacy: req.user.lastSeenPrivacy || 'friends', lastSeenFriendIds: (req.user.lastSeenFriendIds || []).map(id => id.toString()), storyAudience: { privacy: req.user.storyAudiencePrivacy || 'everyone', selectedFriendIds: (req.user.storyAudienceFriendIds || []).map(id => id.toString()) } }))
+app.get('/api/calls/ice-servers', auth, callIceConfigLimit, (req, res) => {
+  const iceServers = [{ urls: callStunUrls }]
+  const relayAvailable = callTurnUrls.length > 0 && !!callTurnSharedSecret
+  const expiresAtSeconds = Math.floor(Date.now() / 1000) + (relayAvailable ? callTurnCredentialTtlSeconds : 300)
+  if (relayAvailable) {
+    const username = `${expiresAtSeconds}:${req.user._id.toString()}`
+    const credential = createHmac('sha1', callTurnSharedSecret).update(username).digest('base64')
+    iceServers.push({ urls: callTurnUrls, username, credential })
+  }
+  res.set('Cache-Control', 'no-store, private')
+  res.json({ iceServers, relayAvailable, expiresAt: expiresAtSeconds * 1000 })
+})
 app.get('/api/me/blocked-users', auth, handle(async (req, res) => {
   const users = await User.find({ _id: { $in: req.user.blockedUsers || [] } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor isVerified').lean()
   res.json({ users: users.map(publicUser) })
@@ -2505,9 +2534,9 @@ io.on('connection', async socket => {
     let candidatesToFlush = []
     if (kind === 'ice' && !call) {
       const buffered = pendingDirectIce.get(callId) || []
-      if (buffered.length < 32) buffered.push({ from: socket.userId, to, data, conversationId: conversation._id.toString(), expiresAt: Date.now() + 20_000 })
+      if (buffered.length < 128) buffered.push({ from: socket.userId, to, data, conversationId: conversation._id.toString(), expiresAt: Date.now() + 60_000 })
       pendingDirectIce.set(callId, buffered)
-      setTimeout(() => { const queued = pendingDirectIce.get(callId); if (queued) { const fresh = queued.filter(candidate => candidate.expiresAt > Date.now()); if (fresh.length) pendingDirectIce.set(callId, fresh); else pendingDirectIce.delete(callId) } }, 20_100).unref?.()
+      setTimeout(() => { const queued = pendingDirectIce.get(callId); if (queued) { const fresh = queued.filter(candidate => candidate.expiresAt > Date.now()); if (fresh.length) pendingDirectIce.set(callId, fresh); else pendingDirectIce.delete(callId) } }, 60_100).unref?.()
       return
     }
     if (kind === 'offer') {
