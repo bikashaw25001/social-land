@@ -1,0 +1,4 @@
+﻿Checkpoint: codex-reel-audio-enabled-before-20261024
+File: src/AuthApp.tsx
+SHA256: 1A2945BACD4668685CC330F13069D461BC9DE9B893DC66931108D6301846057F
+Purpose: Preserve current reel sound prompt removal and current default before enabling reel audio by default.

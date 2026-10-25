@@ -1,0 +1,4 @@
+﻿Checkpoint: codex-profile-avatar-banner-gap-before-20261024
+File: src/profile.css
+SHA256: DAA5C2DB48A8F9C6B154A5509BDA10A84A08E1AC232B8C48787B3F72136EBF67
+Purpose: Preserve profile spacing styles before increasing the gap between the cover banner and animated avatar border.

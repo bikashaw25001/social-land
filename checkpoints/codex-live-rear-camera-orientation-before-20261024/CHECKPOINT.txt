@@ -1,0 +1,5 @@
+﻿Named checkpoint before rear-camera orientation change.
+Source files: src/AuthApp.tsx, src/profile.css
+
+CDD7AB249798E8A8001A7887C1A59DEFA0D1EDDB7B353EEBF3C754B57484FF87  AuthApp.tsx
+AB898B761D7CC2B3B6BE0BE49177F7A582DFA78B5B895CE33A4D0E87A402CE33  profile.css

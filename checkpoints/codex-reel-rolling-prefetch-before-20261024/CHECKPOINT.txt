@@ -1,0 +1,4 @@
+﻿Checkpoint: codex-reel-rolling-prefetch-before-20261024
+File: src/AuthApp.tsx
+SHA256: 9C104E8B3F15CEC4DD70B6566E135BAEB16AF67011F1D3C7A2D905216C2D200F
+Purpose: Preserve current feed recommendation and reel playback behavior before rolling reel media prefetch changes.

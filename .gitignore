@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.local-https/
+.env
+.env.*
+!.env.example
+*credentials*.env
+atlas-credentials.env
+server/uploads/
+server/pending-uploads/
+server/model-cache/
+*.tsbuildinfo

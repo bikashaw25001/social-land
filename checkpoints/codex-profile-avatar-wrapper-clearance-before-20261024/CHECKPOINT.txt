@@ -1,0 +1,4 @@
+﻿Checkpoint: codex-profile-avatar-wrapper-clearance-before-20261024
+File: src/profile.css
+SHA256: 5C6A2283CED6C52B04B730F45AD15851E618A96EDF4CABF799374CAFAD921217
+Purpose: Preserve profile layout before correcting the clickable avatar wrapper spacing below the banner.

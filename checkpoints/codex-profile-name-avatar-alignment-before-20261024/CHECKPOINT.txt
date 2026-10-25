@@ -1,0 +1,4 @@
+﻿Checkpoint: codex-profile-name-avatar-alignment-before-20261024
+File: src/profile.css
+SHA256: 0C8B4626BBC76D049A03B88FDA172970494FE047F1C99AAAE6F042D150D2622C
+Purpose: Preserve profile spacing before aligning display name and username with the avatar.
