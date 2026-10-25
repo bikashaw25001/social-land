@@ -1,6 +1,6 @@
-const SHELL_CACHE = 'social-land-shell-v1'
-const ASSET_CACHE = 'social-land-assets-v1'
-const SHELL_URLS = ['/', '/manifest.webmanifest', '/pwa-icon.svg', '/pwa-icon-192.png', '/pwa-icon-512.png', '/pwa-icon-maskable-512.png']
+const SHELL_CACHE = 'social-land-shell-v2'
+const ASSET_CACHE = 'social-land-assets-v2'
+const SHELL_URLS = ['/', '/manifest.webmanifest', '/pwa-icon-192.png', '/pwa-icon-512.png', '/pwa-icon-maskable-512.png']
 
 self.addEventListener('install', event => {
   event.waitUntil(

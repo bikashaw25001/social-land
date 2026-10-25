@@ -1,0 +1,4 @@
+﻿Checkpoint: game picker red accent
+Created: 2026-10-25
+Git baseline: 8ad6ffed7376d3c40e56365308e0aff7b73770d9
+Snapshots capture current workspace CSS before the game picker theme override.

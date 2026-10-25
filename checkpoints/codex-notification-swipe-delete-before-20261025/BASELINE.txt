@@ -1,0 +1,21 @@
+﻿Social Land notification swipe delete checkpoint
+Created: 2026-10-25
+Git root: C:\Users\Lenovo\OneDrive\Desktop\Social land
+HEAD: 8ad6ffed7376d3c40e56365308e0aff7b73770d9
+Files copied: src/AuthApp.tsx, src/profile.css, server/index.js
+Pre-checkpoint git status:
+ M index.html
+ M public/manifest.webmanifest
+ M public/pwa-icon-192.png
+ M public/pwa-icon-512.png
+ M public/pwa-icon-maskable-512.png
+ M public/sw.js
+ M src/AuthApp.tsx
+ M src/main.tsx
+?? checkpoints/codex-chat-game-watch-red-buttons-before-20261025/
+?? checkpoints/codex-game-picker-red-accent-before-20261025/
+?? checkpoints/codex-notification-swipe-delete-before-20261025/
+?? checkpoints/codex-profile-empty-icons-red-before-20261025/
+?? checkpoints/codex-red-logo-primary-color-before-20261025/
+?? checkpoints/codex-site-wide-red-accents-before-20261025/
+?? src/brand.css

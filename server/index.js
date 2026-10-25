@@ -1,6 +1,7 @@
 ﻿import 'dotenv/config'
 import express from 'express'
 import http from 'node:http'
+import { isIP } from 'node:net'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -18,6 +19,7 @@ import { scanModerationFrame, scanUploadedMedia, warmContentModeration } from '.
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
+app.set('trust proxy', 'loopback')
 const server = http.createServer(app)
 const io = new Server(server, { cors: { origin: process.env.NODE_ENV === 'production' ? (process.env.CLIENT_ORIGIN || 'http://localhost:5173') : true, credentials: true } })
 const PORT = Number(process.env.PORT || 3001)
@@ -52,6 +54,7 @@ const passwordResetLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 5, stand
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true, lowercase: true, minlength: 3, maxlength: 24 },
   displayName: { type: String, required: true, trim: true, maxlength: 50 },
+  isVerified: { type: Boolean, default: false },
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },
   alternateEmail: { type: String, default: '', trim: true, lowercase: true, select: false },
   alternateEmailPending: { type: String, default: '', trim: true, lowercase: true, select: false },
@@ -115,7 +118,7 @@ const DeviceSession = mongoose.model('DeviceSession', deviceSessionSchema)
 const emailVerificationSchema = new mongoose.Schema({ email: { type: String, required: true, unique: true, lowercase: true, trim: true }, codeHash: { type: String, required: true }, attempts: { type: Number, default: 0 }, expiresAt: { type: Date, required: true }, verifiedAt: { type: Date, default: null } }, { timestamps: true })
 emailVerificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
 const EmailVerification = mongoose.model('EmailVerification', emailVerificationSchema)
-const messageSchema = new mongoose.Schema({ conversation: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true, index: true }, sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, senderName: { type: String, default: '' }, assistantReply: { type: Boolean, default: false }, system: { type: Boolean, default: false }, replyTo: { type: new mongoose.Schema({ messageId: String, senderId: String, senderName: String, text: String, mediaType: String }, { _id: false }), default: undefined }, text: { type: String, default: '', maxlength: 4000, trim: true }, deliveredAt: { type: Date, default: null }, readAt: { type: Date, default: null }, hiddenFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], mediaFilename: { type: String, default: '' }, mediaOriginalName: { type: String, default: '' }, mediaType: { type: String, enum: ['image','video','file'] }, viewOnce: { type: Boolean, default: false }, viewOnceRecipients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], viewOnceViewedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], storyContext: { storyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Story' }, authorName: String, mediaType: { type: String, enum: ['image','video'] }, caption: String, action: { type: String, enum: ['reply','like'] } }, partyInvite: { type: new mongoose.Schema({ sessionId: String, url: String, hostId: String, hostName: String, invitedIds: [String], participantIds: [String], controllerIds: [String], status: { type: String, enum: ['open','ended'], default: 'open' } }, { _id: false }), default: undefined }, gameInvite: { type: new mongoose.Schema({ sessionId: String, game: { type: String, enum: ['tic-tac-toe','chess','ludo','math-quiz'] }, status: { type: String, enum: ['open','started','ended','declined'], default: 'open' }, hostId: String, hostName: String, maxPlayers: Number, invitedIds: [String], playerIds: [String], leftPlayerIds: [String], leftPlayerId: String, leftPlayerName: String, quizDifficulty: String, quizTimeLimitMinutes: Number }, { _id: false }), default: undefined }, callLog: { type: new mongoose.Schema({ callId: { type: String, required: true }, mode: { type: String, enum: ['audio','video'], required: true }, event: { type: String, enum: ['started','ended','missed'], required: true } }, { _id: false }), default: undefined } }, { timestamps: true })
+const messageSchema = new mongoose.Schema({ conversation: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true, index: true }, sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, senderName: { type: String, default: '' }, assistantReply: { type: Boolean, default: false }, system: { type: Boolean, default: false }, replyTo: { type: new mongoose.Schema({ messageId: String, senderId: String, senderName: String, text: String, mediaType: String }, { _id: false }), default: undefined }, text: { type: String, default: '', maxlength: 4000, trim: true }, deliveredAt: { type: Date, default: null }, readAt: { type: Date, default: null }, hiddenFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], mediaFilename: { type: String, default: '' }, mediaOriginalName: { type: String, default: '' }, mediaType: { type: String, enum: ['image','video','file'] }, viewOnce: { type: Boolean, default: false }, viewOnceRecipients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], viewOnceViewedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], storyContext: { storyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Story' }, authorName: String, mediaType: { type: String, enum: ['image','video'] }, caption: String, action: { type: String, enum: ['reply','like'] } }, partyInvite: { type: new mongoose.Schema({ sessionId: String, url: String, hostId: String, hostName: String, hostVerified: Boolean, invitedIds: [String], participantIds: [String], controllerIds: [String], status: { type: String, enum: ['open','ended'], default: 'open' } }, { _id: false }), default: undefined }, gameInvite: { type: new mongoose.Schema({ sessionId: String, game: { type: String, enum: ['tic-tac-toe','chess','ludo','math-quiz'] }, status: { type: String, enum: ['open','started','ended','declined'], default: 'open' }, hostId: String, hostName: String, hostVerified: Boolean, maxPlayers: Number, invitedIds: [String], playerIds: [String], leftPlayerIds: [String], leftPlayerId: String, leftPlayerName: String, quizDifficulty: String, quizTimeLimitMinutes: Number }, { _id: false }), default: undefined }, callLog: { type: new mongoose.Schema({ callId: { type: String, required: true }, mode: { type: String, enum: ['audio','video'], required: true }, event: { type: String, enum: ['started','ended','missed'], required: true } }, { _id: false }), default: undefined } }, { timestamps: true })
 messageSchema.index({ conversation: 1, _id: -1 })
 messageSchema.index({ conversation: 1, readAt: 1, sender: 1 })
 const Message = mongoose.model('Message', messageSchema)
@@ -130,7 +133,7 @@ const messagePreview = message => {
 const logCallMessage = async (conversationId, actorId, callId, mode, event) => {
   const existing = await Message.findOne({ conversation: conversationId, 'callLog.callId': callId, 'callLog.event': event }).select('_id').lean()
   if (existing) return
-  const [conversation, actor] = await Promise.all([Conversation.findById(conversationId), User.findById(actorId).select('displayName')])
+  const [conversation, actor] = await Promise.all([Conversation.findById(conversationId), User.findById(actorId).select('displayName isVerified')])
   if (!conversation || !actor) return
   const label = mode === 'audio' ? 'Voice call' : 'Video call'
   const message = await Message.create({ conversation: conversation._id, sender: actor._id, senderName: actor.displayName || 'Member', text: '', callLog: { callId, mode, event } })
@@ -261,7 +264,7 @@ const selectedStoryFriends = (value, user) => {
   return unique.every(id => friends.has(id)) ? unique.map(id => new mongoose.Types.ObjectId(id)) : null
 }
 
-const publicUser = user => ({ id: user._id.toString(), username: user.username, displayName: user.displayName, accountCreatedAt: user.createdAt || null, isBanned: !!user.bannedAt, bio: user.bio || '', avatarUrl: user.avatarUrl || '', avatarBorder: user.avatarBorder || '', avatarBorderColor: user.avatarBorderColor || '', location: user.location || '', website: user.website || '', pronouns: user.pronouns || '', gender: user.gender || '', age: user.age ?? null, hobbies: user.hobbies || '', relationWith: user.relationWith || '', relationshipStatus: user.relationshipStatus || '', favoriteGame: user.favoriteGame || '', messagePrivacy: user.messagePrivacy || 'friends' })
+const publicUser = user => ({ id: user._id.toString(), username: user.username, displayName: user.displayName, isVerified: !!user.isVerified, accountCreatedAt: user.createdAt || null, isBanned: !!user.bannedAt, bio: user.bio || '', avatarUrl: user.avatarUrl || '', avatarBorder: user.avatarBorder || '', avatarBorderColor: user.avatarBorderColor || '', location: user.location || '', website: user.website || '', pronouns: user.pronouns || '', gender: user.gender || '', age: user.age ?? null, hobbies: user.hobbies || '', relationWith: user.relationWith || '', relationshipStatus: user.relationshipStatus || '', favoriteGame: user.favoriteGame || '', messagePrivacy: user.messagePrivacy || 'friends' })
 const publicProfileUser = user => ({ ...publicUser(user), bannerUrl: user.bannerUrl || '', privateProfile: !!user.privateProfile, followerCount: user.followers?.length || 0, followingCount: user.following?.length || 0, friendCount: user.friends?.length || 0 })
 const publicActivity = activity => ({ id: activity._id.toString(), type: activity.type, actor: publicUser(activity.actor), postId: activity.post?._id?.toString() || activity.post?.toString() || '', postKind: activity.postKind || 'post', message: activity.message || '', strikeCount: activity.strikeCount || 0, read: activity.read, createdAt: activity.createdAt })
 const publicStory = (story, viewerId) => { const id = story._id.toString(); const mediaToken = jwt.sign({ purpose: 'story-media', storyId: id, viewerId: viewerId.toString() }, JWT_SECRET, { expiresIn: '24h' }); const owner = story.author._id?.toString() === viewerId.toString() || story.author.toString?.() === viewerId.toString(); return { id, author: publicUser(story.author), mediaUrl: `/api/stories/${id}/media?token=${mediaToken}`, mediaType: story.mediaType, caption: story.caption || '', privacy: story.privacy || 'everyone', likesCount: (story.likes || []).length, likedByMe: (story.likes || []).some(userId => userId.toString() === viewerId.toString()), seenByMe: !owner && (story.views || []).some(view => view.user?.toString() === viewerId.toString()), ...(owner ? { selectedFriendIds: (story.selectedFriends || []).map(id => id._id?.toString() || id.toString()), viewsCount: (story.views || []).length } : {}), createdAt: story.createdAt, expiresAt: story.expiresAt } }
@@ -278,7 +281,7 @@ const canViewStory = async (story, user, authorRecord) => {
 const createActivity = async (recipientId, actorId, type, postId, postKind) => {
   if (!recipientId || recipientId.toString() === actorId.toString()) return
   const activity = await Activity.create({ recipient: recipientId, actor: actorId, type, ...(postId ? { post: postId, postKind } : {}) })
-  await activity.populate('actor', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+  await activity.populate('actor', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
   const payload = publicActivity(activity)
   io.to(recipientId.toString()).emit('activity:new', payload)
   return payload
@@ -334,7 +337,7 @@ const warnAndCountModerationStrike = async (post, scan) => {
     ? `Your ${contentLabel} was ${contentAction} because nudity was detected. This is your third violation, so your account has been permanently banned.`
     : `Your ${contentLabel} was ${contentAction} because the content classifier detected nudity. This is warning ${user.moderationStrikes} of 3; another violation will permanently ban your account.`
   const activity = await Activity.create({ recipient: user._id, actor: user._id, type: 'moderation_warning', message, strikeCount: user.moderationStrikes })
-  await activity.populate('actor', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+  await activity.populate('actor', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
   io.to(user._id.toString()).emit('activity:new', publicActivity(activity))
   if (post.kind === 'post' || post.kind === 'reel') io.to(user._id.toString()).emit('post:moderation', { postId: post._id.toString(), status: 'removed' })
   if (isBanned) {
@@ -369,7 +372,7 @@ const moderatePost = async postId => {
     if (fs.existsSync(pendingPath)) await fs.promises.rename(pendingPath, publicPath)
     else if (!fs.existsSync(publicPath)) throw new Error('A scanned media file disappeared before publication.')
   }
-  const approved = await Post.findOneAndUpdate({ _id: post._id, moderationStatus: 'processing' }, { $set: { moderationStatus: 'approved', moderationStartedAt: null } }, { returnDocument: 'after' }).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+  const approved = await Post.findOneAndUpdate({ _id: post._id, moderationStatus: 'processing' }, { $set: { moderationStatus: 'approved', moderationStartedAt: null } }, { returnDocument: 'after' }).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
   if (!approved) { await removePostMedia(post); return }
   approved.mediaItems?.forEach((item, index) => { if (item.type === 'video') scheduleVideoTranscode(approved._id, item.url, index) })
   io.to(approved.author._id.toString()).emit('post:moderation', { postId: approved._id.toString(), status: 'approved', post: publicPost(approved, approved.author._id) })
@@ -381,21 +384,79 @@ const shouldNotifyMessage = async conversationId => {
 }
 const tokenFor = user => jwt.sign({ sub: user._id.toString(), ver: user.sessionVersion || 0 }, JWT_SECRET, { expiresIn: '7d' })
 const deviceSessionRoom = sessionId => `device-session:${sessionId}`
-const deviceDetailsFor = req => {
+const cleanLocationPart = value => String(value || '').replace(/[\x00-\x1f<>]/gi, '').trim().slice(0, 70)
+const normalizedIpAddress = value => {
+  const address = String(value || '').trim().replace(/^::ffff:/i, '')
+  return isIP(address) ? address : ''
+}
+const isLoopbackAddress = value => {
+  const address = normalizedIpAddress(value)
+  return address === '127.0.0.1' || address === '::1'
+}
+const isPublicIpAddress = value => {
+  const address = normalizedIpAddress(value)
+  if (!address) return false
+  if (isIP(address) === 4) {
+    const [first, second] = address.split('.').map(Number)
+    return !(first === 0 || first === 10 || first === 127 || first >= 224 ||
+      (first === 169 && second === 254) ||
+      (first === 172 && second >= 16 && second <= 31) ||
+      (first === 192 && second === 168) ||
+      (first === 100 && second >= 64 && second <= 127))
+  }
+  const lower = address.toLowerCase()
+  return !(lower === '::' || lower === '::1' || lower.startsWith('fc') ||
+    lower.startsWith('fd') || /^fe[89ab]/.test(lower) || lower.startsWith('ff'))
+}
+const ipLocationCache = new Map()
+const approximateLocationForIp = async value => {
+  const address = normalizedIpAddress(value)
+  if (!isPublicIpAddress(address)) return ''
+  const now = Date.now()
+  const cached = ipLocationCache.get(address)
+  if (cached && cached.expiresAt > now) return cached.location
+  const remember = location => {
+    if (ipLocationCache.size >= 1000) ipLocationCache.delete(ipLocationCache.keys().next().value)
+    ipLocationCache.set(address, { location, expiresAt: Date.now() + (location ? 6 * 60 * 60 * 1000 : 5 * 60 * 1000) })
+    return location
+  }
+  try {
+    const fields = new URLSearchParams({ fields: 'success,city,region,country' })
+    const response = await fetch('https://ipwho.is/' + encodeURIComponent(address) + '?' + fields, { signal: AbortSignal.timeout(1500), headers: { accept: 'application/json' } })
+    if (!response.ok) return remember('')
+    const result = await response.json()
+    if (result?.success !== true) return remember('')
+    return remember([cleanLocationPart(result.city), cleanLocationPart(result.region), cleanLocationPart(result.country)].filter(Boolean).join(', ').slice(0, 160))
+  } catch {
+    return remember('')
+  }
+}
+const approximateLocationForRequest = async req => {
+  const headers = req.headers || {}
+  const trustedProxy = isLoopbackAddress(req.socket?.remoteAddress)
+  const trustedEdge = trustedProxy || headers['cf-ray'] || headers['x-vercel-id']
+  if (trustedEdge) {
+    const city = cleanLocationPart(headers['cf-ipcity'] || headers['x-vercel-ip-city'])
+    const region = cleanLocationPart(headers['cf-region'] || headers['x-vercel-ip-country-region'])
+    const country = cleanLocationPart(headers['cf-ipcountry'] || headers['x-vercel-ip-country'])
+    const fromHeaders = [city, region && region !== city ? region : '', country].filter(Boolean).join(', ').slice(0, 160)
+    if (fromHeaders) return fromHeaders
+  }
+  const forwardedAddress = trustedProxy
+    ? headers['cf-connecting-ip'] || headers['x-real-ip'] || String(headers['x-forwarded-for'] || '').split(',').at(-1)
+    : ''
+  return approximateLocationForIp(forwardedAddress || req.ip || req.socket?.remoteAddress)
+}
+const deviceDetailsFor = async req => {
   const rawAgent = String(req.get('user-agent') || '').slice(0, 500)
   const deviceId = String(req.body?.deviceId || '').trim()
   const platform = /iPhone/i.test(rawAgent) ? 'iPhone' : /iPad/i.test(rawAgent) ? 'iPad' : /Android/i.test(rawAgent) ? 'Android device' : /Windows/i.test(rawAgent) ? 'Windows PC' : /Macintosh|Mac OS/i.test(rawAgent) ? 'Mac' : /Linux/i.test(rawAgent) ? 'Linux PC' : 'Unknown device'
   const browser = /Edg\//i.test(rawAgent) ? 'Edge' : /Firefox\//i.test(rawAgent) ? 'Firefox' : /Chrome\//i.test(rawAgent) ? 'Chrome' : /Safari\//i.test(rawAgent) ? 'Safari' : 'Browser'
-  const headers = req.headers || {}
-  const clean = value => String(value || '').replace(/[\r\n<>]/g, '').trim().slice(0, 70)
-  const city = clean(headers['cf-ipcity'] || headers['x-vercel-ip-city'])
-  const region = clean(headers['cf-region'] || headers['x-vercel-ip-country-region'])
-  const country = clean(headers['cf-ipcountry'] || headers['x-vercel-ip-country'])
-  const location = [city, region && region !== city ? region : '', country].filter(Boolean).join(', ') || 'Approximate location unavailable'
+  const location = await approximateLocationForRequest(req) || 'Approximate location unavailable'
   return { deviceId: /^[a-zA-Z0-9-]{16,80}$/.test(deviceId) ? deviceId : randomUUID(), deviceName: `${platform} - ${browser}`.slice(0, 80), location, userAgent: rawAgent }
 }
 const createDeviceLogin = async (user, req) => {
-  const details = deviceDetailsFor(req)
+  const details = await deviceDetailsFor(req)
   const knownDevice = await DeviceSession.exists({ user: user._id, deviceId: details.deviceId })
   const sessionId = randomUUID()
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -411,7 +472,7 @@ const auth = async (req, res, next) => {
   if (!dbReady) return res.status(503).json({ error: 'Database is not connected yet. Add MONGODB_URI to .env and restart the server.' })
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, '')
   if (!token) return res.status(401).json({ error: 'Please log in to continue.' })
-  try { const claims = jwt.verify(token, JWT_SECRET); req.user = await User.findById(claims.sub); if (!req.user) return res.status(401).json({ error: 'Account no longer exists.' }); if (req.user.bannedAt) return res.status(403).json({ error: `Your account is banned. Reason: ${req.user.banReason || 'Repeated nudity violations.'}` }); if ((claims.ver || 0) !== (req.user.sessionVersion || 0)) return res.status(401).json({ error: 'Your password changed. Please log in again.' }); if (claims.sid) { const session = await DeviceSession.findOne({ sessionId: claims.sid, user: req.user._id, sessionVersion: claims.ver || 0, revokedAt: null, expiresAt: { $gt: new Date() } }).select('_id lastActiveAt'); if (!session) return res.status(401).json({ error: 'This device session has been logged out. Please sign in again.' }); req.deviceSession = session; if (Date.now() - new Date(session.lastActiveAt).getTime() > 5 * 60 * 1000) void DeviceSession.updateOne({ _id: session._id }, { $set: { lastActiveAt: new Date() } }).catch(() => {}) } next() }
+  try { const claims = jwt.verify(token, JWT_SECRET); req.user = await User.findById(claims.sub); if (!req.user) return res.status(401).json({ error: 'Account no longer exists.' }); if (req.user.bannedAt) return res.status(403).json({ error: `Your account is banned. Reason: ${req.user.banReason || 'Repeated nudity violations.'}` }); if ((claims.ver || 0) !== (req.user.sessionVersion || 0)) return res.status(401).json({ error: 'Your password changed. Please log in again.' }); if (claims.sid) { const session = await DeviceSession.findOne({ sessionId: claims.sid, user: req.user._id, sessionVersion: claims.ver || 0, revokedAt: null, expiresAt: { $gt: new Date() } }).select('_id sessionId lastActiveAt'); if (!session) return res.status(401).json({ error: 'This device session has been logged out. Please sign in again.' }); req.deviceSession = session; if (Date.now() - new Date(session.lastActiveAt).getTime() > 5 * 60 * 1000) void DeviceSession.updateOne({ _id: session._id }, { $set: { lastActiveAt: new Date() } }).catch(() => {}) } next() }
   catch { return res.status(401).json({ error: 'Your session expired. Please log in again.' }) }
 }
 const dbOnly = (req, res, next) => dbReady ? next() : res.status(503).json({ error: 'Database is not connected yet. Add MONGODB_URI to .env and restart the server.' })
@@ -759,6 +820,14 @@ app.post('/api/me/two-step', auth, passwordResetLimit, handle(async (req, res) =
 app.get('/api/security/sessions', auth, handle(async (req, res) => {
   const sessions = await DeviceSession.find({ user: req.user._id, sessionVersion: req.user.sessionVersion || 0, revokedAt: null, expiresAt: { $gt: new Date() } }).sort({ lastActiveAt: -1 }).lean()
   const currentSessionId = req.deviceSession?.sessionId || ''
+  const currentSession = sessions.find(session => session.sessionId === currentSessionId)
+  if (currentSession && (!currentSession.location || currentSession.location === 'Approximate location unavailable')) {
+    const location = await approximateLocationForRequest(req)
+    if (location) {
+      currentSession.location = location
+      await DeviceSession.updateOne({ sessionId: currentSessionId, user: req.user._id, revokedAt: null }, { $set: { location } })
+    }
+  }
   res.json({ sessions: sessions.map(session => ({ id: session.sessionId, deviceName: session.deviceName, location: session.location || 'Approximate location unavailable', lastActiveAt: session.lastActiveAt, createdAt: session.createdAt, current: session.sessionId === currentSessionId })) })
 }))
 app.delete('/api/security/sessions/:id', auth, handle(async (req, res) => {
@@ -894,7 +963,7 @@ app.post('/api/conversations/:id/assistant', auth, assistantChatLimit, handle(as
 }))
 app.get('/api/me', auth, (req, res) => res.json({ user: publicProfileUser(req.user), groupAddPrivacy: req.user.groupAddPrivacy || 'anyone', messagePrivacy: req.user.messagePrivacy || 'friends', lastSeenPrivacy: req.user.lastSeenPrivacy || 'friends', lastSeenFriendIds: (req.user.lastSeenFriendIds || []).map(id => id.toString()), storyAudience: { privacy: req.user.storyAudiencePrivacy || 'everyone', selectedFriendIds: (req.user.storyAudienceFriendIds || []).map(id => id.toString()) } }))
 app.get('/api/me/blocked-users', auth, handle(async (req, res) => {
-  const users = await User.find({ _id: { $in: req.user.blockedUsers || [] } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor').lean()
+  const users = await User.find({ _id: { $in: req.user.blockedUsers || [] } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor isVerified').lean()
   res.json({ users: users.map(publicUser) })
 }))
 app.patch('/api/me/story-audience', auth, handle(async (req, res) => {
@@ -908,8 +977,15 @@ app.patch('/api/me/story-audience', auth, handle(async (req, res) => {
   res.json({ storyAudience: { privacy, selectedFriendIds: selected.map(id => id.toString()) } })
 }))
 app.get('/api/notifications', auth, handle(async (req, res) => {
-  const activities = await Activity.find({ recipient: req.user._id }).sort({ createdAt: -1 }).limit(60).populate('actor', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+  const activities = await Activity.find({ recipient: req.user._id }).sort({ createdAt: -1 }).limit(60).populate('actor', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
   res.json({ notifications: activities.map(publicActivity), unreadCount: activities.filter(activity => !activity.read).length })
+}))
+app.delete('/api/notifications/:id', auth, handle(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Notification not found.' })
+  const deleted = await Activity.findOneAndDelete({ _id: req.params.id, recipient: req.user._id })
+  if (!deleted) return res.status(404).json({ message: 'Notification not found.' })
+  const unreadCount = await Activity.countDocuments({ recipient: req.user._id, read: false })
+  res.json({ ok: true, unreadCount })
 }))
 app.post('/api/notifications/read', auth, handle(async (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(id => typeof id === 'string').slice(0, 60) : []
@@ -920,7 +996,7 @@ app.post('/api/notifications/read', auth, handle(async (req, res) => {
 app.get('/api/stories', auth, handle(async (req, res) => {
   const followedAuthors = await User.find({ followers: req.user._id }).distinct('_id')
   const everyoneAuthors = [...followedAuthors, ...(req.user.friends || [])]
-  const foundStories = await Story.find({ expiresAt: { $gt: new Date() }, $or: [{ author: req.user._id }, { privacy: { $in: ['everyone', null] }, author: { $in: everyoneAuthors } }, { privacy: 'friends', author: { $in: req.user.friends } }, { privacy: 'selected', author: { $in: req.user.friends }, selectedFriends: req.user._id }] }).sort({ createdAt: 1 }).limit(500).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+  const foundStories = await Story.find({ expiresAt: { $gt: new Date() }, $or: [{ author: req.user._id }, { privacy: { $in: ['everyone', null] }, author: { $in: everyoneAuthors } }, { privacy: 'friends', author: { $in: req.user.friends } }, { privacy: 'selected', author: { $in: req.user.friends }, selectedFriends: req.user._id }] }).sort({ createdAt: 1 }).limit(500).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
   const authorIds = [...new Set(foundStories.map(story => story.author._id.toString()))]
   const authors = await User.find({ _id: { $in: authorIds } }).select('privateProfile followers').lean()
   const authorsById = new Map(authors.map(author => [author._id.toString(), author]))
@@ -950,7 +1026,7 @@ app.post('/api/stories', auth, storyUpload.single('media'), handle(async (req, r
     return res.status(422).json({ error: 'This story was removed because the content classifier detected nudity.' })
   }
   const story = await Story.create({ author: req.user._id, mediaUrl: `/story-media/${path.basename(req.file.path)}`, mediaType: req.file.mimetype.startsWith('video/') ? 'video' : 'image', caption, privacy, selectedFriends, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) })
-  await story.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+  await story.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
   res.status(201).json({ story: publicStory(story, req.user._id) })
 }))
 app.post('/api/stories/:id/view', auth, handle(async (req, res) => {
@@ -990,7 +1066,7 @@ app.post('/api/stories/:id/reply', auth, handle(async (req, res) => {
   const message = await Message.create({ conversation: conversation._id, sender: req.user._id, text, storyContext })
   await Conversation.updateOne({ _id: conversation._id }, { $pullAll: { archivedFor: [author._id, req.user._id], hiddenFor: [author._id, req.user._id] } })
   conversation.latestText = `Story reply: ${text}`; conversation.latestAt = message.createdAt; await conversation.save()
-  const payload = { id: message.id, conversationId: conversation.id, senderId: req.user.id, senderName: message.senderName || req.user.displayName || 'Member', ...(message.replyTo ? { replyTo: message.replyTo } : {}), text, deliveredAt: null, readAt: null, storyContext: { ...storyContext, storyId: story._id.toString() }, createdAt: message.createdAt }
+  const payload = { id: message.id, conversationId: conversation.id, senderId: req.user.id, senderName: message.senderName || req.user.displayName || 'Member', senderVerified: !!req.user.isVerified, ...(message.replyTo ? { replyTo: message.replyTo } : {}), text, deliveredAt: null, readAt: null, storyContext: { ...storyContext, storyId: story._id.toString() }, createdAt: message.createdAt }
   io.to(conversation.id).emit('message:new', payload)
   io.to(author.id).emit('message:new', payload)
   if (notifyAuthor) await createActivity(author._id, req.user._id, 'message')
@@ -1009,7 +1085,7 @@ app.get('/api/stories/:id/media', handle(async (req, res) => {
   res.sendFile(path.join(directory, path.basename(story.mediaUrl)), err => { if (err && !res.headersSent) res.status(404).json({ error: 'Story media not found.' }) })
 }))
 app.get('/api/stories/:id/views', auth, handle(async (req, res) => {
-  const story = await Story.findOne({ _id: req.params.id, author: req.user._id, expiresAt: { $gt: new Date() } }).populate('views.user', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').populate('likes', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+  const story = await Story.findOne({ _id: req.params.id, author: req.user._id, expiresAt: { $gt: new Date() } }).populate('views.user', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').populate('likes', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
   if (!story) return res.status(404).json({ error: 'Story not found or expired.' })
   res.json({ viewers: (story.views || []).filter(view => view.user).sort((a, b) => new Date(b.seenAt) - new Date(a.seenAt)).map(view => ({ user: publicUser(view.user), seenAt: view.seenAt })), likers: (story.likes || []).filter(Boolean).map(publicUser) })
 }))
@@ -1023,7 +1099,7 @@ app.patch('/api/stories/:id', auth, handle(async (req, res) => {
   story.privacy = privacy
   story.selectedFriends = selectedFriends
   await story.save()
-  await story.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+  await story.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
   res.json({ story: publicStory(story, req.user._id) })
 }))
 app.delete('/api/stories/:id', auth, handle(async (req, res) => {
@@ -1221,7 +1297,7 @@ app.delete('/api/users/:id/follower', auth, handle(async (req, res) => {
   res.json({ removed: true, followerCount: req.user.followers.length, followingCount: target.following.length })
 }))
 app.get('/api/me/follow-requests', auth, handle(async (req, res) => {
-  const users = await User.find({ _id: { $in: req.user.followRequestsIncoming || [] } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor bannerUrl location website pronouns followers following friends').sort({ username: 1 })
+  const users = await User.find({ _id: { $in: req.user.followRequestsIncoming || [] } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor bannerUrl location website pronouns followers following friends isVerified').sort({ username: 1 })
   res.json({ users: users.map(user => ({ ...publicProfileUser(user), relationship: isFriend(req.user, user._id) ? 'friend' : 'none' })) })
 }))
 app.post('/api/me/follow-requests/:id/approve', auth, handle(async (req, res) => {
@@ -1254,7 +1330,7 @@ for (const list of ['followers','following','friends']) app.get(`/api/users/:use
   if (!target) return res.status(404).json({ error: 'That profile could not be found.' })
   const isFollower = (target.followers || []).some(id => id.equals(req.user._id))
   if (target.privateProfile && !isFollower && !isFriend(req.user, target._id) && !target._id.equals(req.user._id)) return res.status(403).json({ error: 'Follow this private profile to view its connections.' })
-  const users = await User.find({ _id: { $in: target[list] || [] } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').sort({ username: 1 })
+  const users = await User.find({ _id: { $in: target[list] || [] } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').sort({ username: 1 })
   res.json({ users: users.map(publicUser) })
 }))
 app.get('/api/users/:username/profile', auth, handle(async (req, res) => {
@@ -1262,7 +1338,7 @@ app.get('/api/users/:username/profile', auth, handle(async (req, res) => {
   const profileLookup = username.startsWith('id-') && mongoose.Types.ObjectId.isValid(username.slice(3))
     ? User.findById(username.slice(3))
     : User.findOne({ username })
-  const user = await profileLookup.select('username displayName bio avatarUrl avatarBorder avatarBorderColor bannerUrl createdAt bannedAt location website pronouns gender age hobbies relationWith relationshipStatus favoriteGame privateProfile followers following friends incoming outgoing followRequestsIncoming blockedUsers reconnectRequired messagePrivacy')
+  const user = await profileLookup.select('username displayName bio avatarUrl avatarBorder avatarBorderColor bannerUrl createdAt bannedAt location website pronouns gender age hobbies relationWith relationshipStatus favoriteGame privateProfile followers following friends incoming outgoing followRequestsIncoming blockedUsers reconnectRequired messagePrivacy isVerified')
   if (!user) return res.status(404).json({ error: 'That profile could not be found.' })
   const blockedByViewer = (req.user.blockedUsers || []).some(id => id.equals(user._id))
   const blockedViewer = (user.blockedUsers || []).some(id => id.equals(req.user._id))
@@ -1273,8 +1349,8 @@ app.get('/api/users/:username/profile', auth, handle(async (req, res) => {
   const canViewContent = user._id.equals(req.user._id) || !user.privateProfile || isFollowing || relationship === 'friend'
   const moderationVisibility = { moderationStatus: { $nin: ['pending','processing','removed'] } }
   const [posts, reels, legacyNotes, notePosts, postCount, reelCount, legacyNoteCount, notePostCount] = await Promise.all([
-    canViewContent ? Post.find({ author: user._id, kind: 'post', archived: { $ne: true }, ...moderationVisibility }).sort({ createdAt: -1 }).limit(60).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor bannerUrl location website pronouns').lean() : [],
-    canViewContent ? Post.find({ author: user._id, kind: 'reel', archived: { $ne: true }, ...moderationVisibility }).sort({ createdAt: -1 }).limit(60).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor bannerUrl location website pronouns').lean() : [],
+    canViewContent ? Post.find({ author: user._id, kind: 'post', archived: { $ne: true }, ...moderationVisibility }).sort({ createdAt: -1 }).limit(60).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor bannerUrl location website pronouns isVerified').lean() : [],
+    canViewContent ? Post.find({ author: user._id, kind: 'reel', archived: { $ne: true }, ...moderationVisibility }).sort({ createdAt: -1 }).limit(60).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor bannerUrl location website pronouns isVerified').lean() : [],
     canViewContent ? ProfileNote.find({ author: user._id }).sort({ createdAt: -1 }).limit(100).lean() : [],
     canViewContent ? Post.find({ author: user._id, kind: 'note', archived: { $ne: true } }).sort({ createdAt: -1 }).limit(100).lean() : [],
     Post.countDocuments({ author: user._id, kind: 'post', archived: { $ne: true }, ...moderationVisibility }),
@@ -1291,8 +1367,8 @@ app.get('/api/posts', auth, handle(async (req, res) => {
     const kind = ['post','reel','note'].includes(req.query.kind) ? req.query.kind : null
     if (!kind) return res.status(400).json({ error: 'Choose posts, Reels, or Notes.' })
     const [likedPosts, likedLegacyNotes] = await Promise.all([
-      Post.find({ kind, likes: req.user._id, archived: { $ne: true }, moderationStatus: { $nin: ['pending','processing','removed'] } }).sort({ createdAt: -1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarColor location website pronouns').lean(),
-      kind === 'note' ? ProfileNote.find({ likes: req.user._id }).sort({ createdAt: -1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean() : []
+      Post.find({ kind, likes: req.user._id, archived: { $ne: true }, moderationStatus: { $nin: ['pending','processing','removed'] } }).sort({ createdAt: -1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarColor location website pronouns isVerified').lean(),
+      kind === 'note' ? ProfileNote.find({ likes: req.user._id }).sort({ createdAt: -1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean() : []
     ])
     const accessiblePosts = await Promise.all(likedPosts.map(async post => await canViewUserContent(req.user, post.author._id) && !pairIsBlocked(req.user, post.author) ? publicPost(post, req.user._id) : null))
     const accessibleLegacyNotes = await Promise.all(likedLegacyNotes.map(async note => await canViewUserContent(req.user, note.author._id) && !pairIsBlocked(req.user, note.author) ? publicLegacyNotePost(note, req.user._id) : null))
@@ -1300,7 +1376,7 @@ app.get('/api/posts', auth, handle(async (req, res) => {
     return res.json({ posts })
   }
   if (req.query.archived === 'true') {
-    const archivedPosts = await Post.find({ author: req.user._id, archived: true }).sort({ createdAt: -1 }).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+    const archivedPosts = await Post.find({ author: req.user._id, archived: true }).sort({ createdAt: -1 }).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
     return res.json({ posts: archivedPosts.map(post => publicPost(post, req.user._id)) })
   }
   const kind = ['post','reel','note'].includes(req.query.kind) ? req.query.kind : 'post'
@@ -1308,9 +1384,9 @@ app.get('/api/posts', auth, handle(async (req, res) => {
   const recommendationSignals = await RecommendationSignal.find({ user: req.user._id }).sort({ updatedAt: -1 }).limit(300).lean()
   if (kind === 'post') {
     const [posts, notePosts, legacyNotes] = await Promise.all([
-      Post.find({ kind: 'post', archived: { $ne: true }, author: { $in: allowedAuthors }, moderationStatus: { $nin: ['pending','processing','removed'] } }).sort({ createdAt: -1 }).limit(40).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean(),
-      Post.find({ kind: 'note', archived: { $ne: true }, author: { $in: allowedAuthors }, moderationStatus: { $nin: ['pending','processing','removed'] } }).sort({ createdAt: -1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean(),
-      ProfileNote.find({ author: { $in: allowedAuthors } }).sort({ createdAt: -1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+      Post.find({ kind: 'post', archived: { $ne: true }, author: { $in: allowedAuthors }, moderationStatus: { $nin: ['pending','processing','removed'] } }).sort({ createdAt: -1 }).limit(40).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean(),
+      Post.find({ kind: 'note', archived: { $ne: true }, author: { $in: allowedAuthors }, moderationStatus: { $nin: ['pending','processing','removed'] } }).sort({ createdAt: -1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean(),
+      ProfileNote.find({ author: { $in: allowedAuthors } }).sort({ createdAt: -1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
     ])
     const eligibleNotes = await Promise.all(legacyNotes.map(async note => await canViewUserContent(req.user, note.author) && !pairIsBlocked(req.user, note.author) ? publicLegacyNotePost(note, req.user._id) : null))
     const feed = [...posts.map(post => publicPost(post, req.user._id)), ...notePosts.map(note => publicPost(note, req.user._id)), ...eligibleNotes.filter(Boolean)]
@@ -1327,7 +1403,7 @@ app.get('/api/posts', auth, handle(async (req, res) => {
         .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(pageSize)
-        .populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns privateProfile blockedUsers')
+        .populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns privateProfile blockedUsers isVerified')
         .lean()
       if (!batch.length) break
       for (const reel of batch) {
@@ -1340,7 +1416,7 @@ app.get('/api/posts', auth, handle(async (req, res) => {
     }
     return res.json({ posts: rankRecommendedPosts(reels, recommendationSignals).slice(0, 40) })
   }
-  const posts = await Post.find({ kind, archived: { $ne: true }, author: { $in: allowedAuthors }, moderationStatus: { $nin: ['pending','processing','removed'] } }).sort({ createdAt: -1 }).limit(40).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+  const posts = await Post.find({ kind, archived: { $ne: true }, author: { $in: allowedAuthors }, moderationStatus: { $nin: ['pending','processing','removed'] } }).sort({ createdAt: -1 }).limit(40).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
   res.json({ posts: rankRecommendedPosts(posts, recommendationSignals).map(post => publicPost(post, req.user._id)) })
 }))
 app.post('/api/recommendations/feedback', auth, handle(async (req, res) => {
@@ -1397,18 +1473,18 @@ app.post('/api/posts', auth, upload.fields([{ name: 'media', maxCount: 10 }, { n
   const post = await Post.create({ author: req.user._id, caption, topics: extractPostTopics(caption), kind, mediaUrl: mediaItems[0]?.url || '', mediaType: mediaItems[0]?.type || 'image', mediaItems, moderationStatus: needsModeration ? 'pending' : 'approved', ...(kind === 'reel' ? { mediaDelivery: { status: 'queued' } } : {}), likesHidden: req.body?.likesHidden === 'true', commentsDisabled: req.body?.commentsDisabled === 'true', noteTheme: kind === 'note' ? noteTheme : 'classic', noteBackgroundColor: kind === 'note' ? noteBackgroundColor : '#eeeaff', noteTextColor: kind === 'note' ? noteTextColor : '#342e48' })
   if (needsModeration) enqueuePostModeration(post._id)
   else mediaItems.forEach((item, index) => { if (item.type === 'video') scheduleVideoTranscode(post._id, item.url, index) })
-  await post.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+  await post.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
   res.status(201).json({ post: publicPost(post, req.user._id) })
 }))
 app.get('/api/posts/:id', auth, handle(async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ error: 'Note or post not found.' })
-  const post = await Post.findById(req.params.id).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+  const post = await Post.findById(req.params.id).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
   if (post) {
     if (['pending','processing','removed'].includes(post.moderationStatus) && post.author._id.toString() !== req.user._id.toString()) return res.status(404).json({ error: 'Post not found.' })
     if (!await canViewUserContent(req.user, post.author._id)) return res.status(403).json({ error: 'Follow this account to view this post.' })
     return res.json({ post: publicPost(post, req.user._id) })
   }
-  const note = await ProfileNote.findById(req.params.id).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+  const note = await ProfileNote.findById(req.params.id).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
   if (!note) return res.status(404).json({ error: 'Note or post not found.' })
   if (!await canViewUserContent(req.user, note.author._id)) return res.status(403).json({ error: 'Follow this account to view this note.' })
   res.json({ post: publicLegacyNotePost(note, req.user._id) })
@@ -1449,6 +1525,20 @@ app.post('/api/posts/:id/like', auth, handle(async (req, res) => {
   if (liked && !wasLiked) await createActivity(note.author, req.user._id, 'like')
   res.json({ liked, likesCount: count.likes.length })
 }))
+app.get('/api/posts/:id/likes', auth, handle(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ error: 'Post not found.' })
+  const post = await Post.findById(req.params.id).select('author likes').lean()
+  const note = post ? null : await ProfileNote.findById(req.params.id).select('author likes').lean()
+  const item = post || note
+  if (!item) return res.status(404).json({ error: 'Post not found.' })
+  if (!item.author.equals(req.user._id)) return res.status(403).json({ error: 'Only the post owner can view its likes.' })
+  const offset = Math.max(0, Math.min(100000, Number.parseInt(String(req.query.offset || '0'), 10) || 0))
+  const limit = Math.max(1, Math.min(50, Number.parseInt(String(req.query.limit || '50'), 10) || 50))
+  const ids = (item.likes || []).slice(offset, offset + limit)
+  const users = await User.find({ _id: { $in: ids } }).select('username displayName isVerified avatarUrl avatarBorder avatarBorderColor').lean()
+  const byId = new Map(users.map(user => [user._id.toString(), user]))
+  res.json({ users: ids.map(id => byId.get(id.toString())).filter(Boolean).map(user => ({ id: user._id.toString(), username: user.username, displayName: user.displayName, isVerified: !!user.isVerified, avatarUrl: user.avatarUrl || '', avatarBorder: user.avatarBorder || '', avatarBorderColor: user.avatarBorderColor || '' })), total: (item.likes || []).length, offset, hasMore: offset + ids.length < (item.likes || []).length })
+}))
 app.get('/api/posts/:id/comments', auth, handle(async (req, res) => {
   const post = await Post.findById(req.params.id).select('author')
   if (!post) return res.status(404).json({ error: 'Post not found.' })
@@ -1458,10 +1548,10 @@ app.get('/api/posts/:id/comments', auth, handle(async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(parentCommentId)) return res.status(400).json({ error: 'That comment is no longer available.' })
     const parent = await Comment.findOne({ _id: parentCommentId, post: req.params.id }).select('_id')
     if (!parent) return res.status(404).json({ error: 'That comment is no longer available.' })
-    const replies = await Comment.find({ post: req.params.id, parentComment: parent._id }).sort({ createdAt: 1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+    const replies = await Comment.find({ post: req.params.id, parentComment: parent._id }).sort({ createdAt: 1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
     return res.json({ comments: replies.map(comment => publicComment(comment, req.user._id)) })
   }
-  const comments = await Comment.find({ post: req.params.id, parentComment: null }).sort({ createdAt: 1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()
+  const comments = await Comment.find({ post: req.params.id, parentComment: null }).sort({ createdAt: 1 }).limit(100).populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()
   const replyCounts = comments.length ? await Comment.aggregate([{ $match: { post: post._id, parentComment: { $in: comments.map(comment => comment._id) } } }, { $group: { _id: '$parentComment', count: { $sum: 1 } } }]) : []
   const countByParent = new Map(replyCounts.map(item => [item._id.toString(), item.count]))
   res.json({ comments: comments.map(comment => ({ ...publicComment(comment, req.user._id), repliesCount: countByParent.get(comment._id.toString()) || 0 })) })
@@ -1482,7 +1572,7 @@ app.post('/api/posts/:id/comments', auth, handle(async (req, res) => {
   const comment = await Comment.create({ post: post._id, author: req.user._id, parentComment: parentComment?._id || null, text })
   await Post.updateOne({ _id: post._id }, { $inc: { commentCount: 1 } })
   void recordRecommendationSignal(req.user._id, post, 'comment').catch(error => console.warn('Recommendation comment signal failed:', error.message))
-  await comment.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+  await comment.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
   await createActivity(post.author, req.user._id, 'comment', post._id, post.kind)
   res.status(201).json({ comment: publicComment(comment, req.user._id) })
 }))
@@ -1542,7 +1632,7 @@ app.patch('/api/posts/:id', auth, handle(async (req, res) => {
     if (!keys.length || keys.some(key => ['likesHidden','commentsDisabled','archived'].includes(key) ? typeof req.body[key] !== 'boolean' : key === 'noteTheme' ? !NOTE_THEMES.some(theme => theme.id === req.body[key]) : !isValidNoteColor(req.body[key]))) return res.status(400).json({ error: 'Choose a valid post setting.' })
     for (const key of keys) post[key] = req.body[key]
     await post.save()
-    await post.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+    await post.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
     return res.json({ post: publicPost(post, req.user._id) })
   }
   const note = await ProfileNote.findById(req.params.id)
@@ -1552,7 +1642,7 @@ app.patch('/api/posts/:id', auth, handle(async (req, res) => {
   if (!keys.length || keys.some(key => key === 'likesHidden' ? typeof req.body[key] !== 'boolean' : key === 'noteTheme' ? !NOTE_THEMES.some(theme => theme.id === req.body[key]) : !isValidNoteColor(req.body[key]))) return res.status(400).json({ error: 'Choose a valid note setting.' })
   for (const key of keys) note[key] = req.body[key]
   await note.save()
-  await note.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+  await note.populate('author', 'username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
   res.json({ post: publicLegacyNotePost(note, req.user._id) })
 }))
 app.delete('/api/posts/:id', auth, handle(async (req, res) => {
@@ -1592,7 +1682,7 @@ app.get('/api/users', auth, handle(async (req, res) => {
   res.json({ users })
 }))
 app.get('/api/friends', auth, handle(async (req, res) => {
-  const [friends, requests] = await Promise.all([User.find({ _id: { $in: req.user.friends } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean(), User.find({ _id: { $in: req.user.incoming } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns').lean()])
+  const [friends, requests] = await Promise.all([User.find({ _id: { $in: req.user.friends } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean(), User.find({ _id: { $in: req.user.incoming } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified').lean()])
   res.json({ friends: friends.map(publicUser), requests: requests.map(publicUser) })
 }))
 app.post('/api/friends/:id/request', auth, handle(async (req, res) => {
@@ -1656,7 +1746,7 @@ app.post('/api/conversations', auth, handle(async (req, res) => {
   res.json({ conversation: { id: conversation.id, user: { ...publicUser(target), lastSeenAt: canViewPresence(req.user, target) ? target.lastSeenAt || null : null }, latestText: conversation.latestText, latestAt: conversation.latestAt } })
 }))
 app.get('/api/group-invitations', auth, handle(async (req, res) => {
-  const invitations = await GroupInvitation.find({ invitee: req.user._id, status: 'pending' }).sort({ createdAt: -1 }).populate('conversation', 'groupName groupImage isGroup').populate('inviter', 'username displayName bio avatarUrl avatarBorder avatarBorderColor').lean()
+  const invitations = await GroupInvitation.find({ invitee: req.user._id, status: 'pending' }).sort({ createdAt: -1 }).populate('conversation', 'groupName groupImage isGroup').populate('inviter', 'username displayName bio avatarUrl avatarBorder avatarBorderColor isVerified').lean()
   res.json({ invitations: invitations.filter(item => item.conversation?.isGroup && item.inviter).map(item => ({ id: item._id.toString(), groupId: item.conversation._id.toString(), groupName: item.conversation.groupName || 'Group chat', groupImage: item.conversation.groupImage || '', inviter: publicUser(item.inviter), createdAt: item.createdAt })) })
 }))
 app.post('/api/group-invitations/:id/respond', auth, handle(async (req, res) => {
@@ -1701,7 +1791,7 @@ app.delete('/api/conversations/:id/leave', auth, handle(async (req, res) => {
 app.get('/api/conversations', auth, handle(async (req, res) => {
   const archivedOnly = req.query.archived === 'true'
   const rows = await Conversation.find({ members: req.user._id, hiddenFor: { $ne: req.user._id }, archivedFor: archivedOnly ? req.user._id : { $ne: req.user._id } }).sort({ latestAt: -1 }).lean()
-  const users = await User.find({ _id: { $in: rows.flatMap(c => c.members).filter(id => !id.equals(req.user._id)) } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor lastSeenAt lastSeenPrivacy lastSeenFriendIds location website pronouns friends blockedUsers reconnectRequired messagePrivacy').lean()
+  const users = await User.find({ _id: { $in: rows.flatMap(c => c.members).filter(id => !id.equals(req.user._id)) } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor lastSeenAt lastSeenPrivacy lastSeenFriendIds location website pronouns friends blockedUsers reconnectRequired messagePrivacy isVerified').lean()
   const byId = new Map(users.map(u => [u._id.toString(), u]))
   const visibleRows = []
   for (const conversation of rows) {
@@ -1739,7 +1829,7 @@ app.get('/api/conversations/search', auth, handle(async (req, res) => {
   const conversations = await Conversation.find({ members: req.user._id, hiddenFor: { $ne: req.user._id } }).select('_id members isGroup groupName groupImage latestText latestAt').lean()
   const rows = await Message.find({ conversation: { $in: conversations.map(item => item._id) }, hiddenFor: { $ne: req.user._id }, text: { $regex: query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } }).sort({ createdAt: -1 }).limit(100).lean()
   const peerIds = conversations.flatMap(c => c.members).filter(id => !id.equals(req.user._id))
-  const users = await User.find({ _id: { $in: peerIds } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor lastSeenAt lastSeenPrivacy lastSeenFriendIds friends blockedUsers reconnectRequired messagePrivacy').lean()
+  const users = await User.find({ _id: { $in: peerIds } }).select('username displayName bio avatarUrl avatarBorder avatarBorderColor lastSeenAt lastSeenPrivacy lastSeenFriendIds friends blockedUsers reconnectRequired messagePrivacy isVerified').lean()
   const byId = new Map(users.map(user => [user._id.toString(), user]))
   const visibleConversations = []
   for (const conversation of conversations) {
@@ -1782,7 +1872,7 @@ app.post('/api/conversations/:id/members', auth, handle(async (req, res) => {
   if (requestedIds.some(id => !friendIds.has(id))) return res.status(403).json({ error: 'You can only add accepted friends to a group.' })
   if (group.members.length + requestedIds.filter(id => !group.members.some(member => member.toString() === id)).length > 51) return res.status(400).json({ error: 'Groups can have up to 51 members.' })
   const [people, pendingRows] = await Promise.all([
-    User.find({ _id: { $in: requestedIds } }).select('_id displayName groupAddPrivacy'),
+    User.find({ _id: { $in: requestedIds } }).select('_id displayName groupAddPrivacy isVerified'),
     GroupInvitation.find({ conversation: group._id, invitee: { $in: requestedIds }, status: 'pending' }).select('invitee')
   ])
   const pendingIds = new Set(pendingRows.map(item => item.invitee.toString()))
@@ -1923,9 +2013,10 @@ app.get('/api/conversations/:id/messages', auth, handle(async (req, res) => {
   const hasMore = rows.length > limit
   const messages = rows.slice(0, limit).reverse()
   const senderIds = [...new Set(messages.map(message => message.sender.toString()))]
-  const senderRows = await User.find({ _id: { $in: senderIds } }).select('displayName').lean()
+  const senderRows = await User.find({ _id: { $in: senderIds } }).select('displayName isVerified').lean()
   const senderNames = new Map(senderRows.map(user => [user._id.toString(), user.displayName]))
-  res.json({ hasMore, messages: messages.map(m => ({ id: m._id.toString(), conversationId: m.conversation.toString(), senderId: m.assistantReply ? `assistant:${m.conversation.toString()}` : m.sender.toString(), senderName: m.senderName || senderNames.get(m.sender.toString()) || 'Member', ...(m.assistantReply ? { assistantReply: true } : {}), ...(m.system ? { system: true } : {}), ...(m.replyTo ? { replyTo: m.replyTo } : {}), text: m.text, ...(m.mediaFilename && (!m.viewOnce || (!m.sender.equals(req.user._id) && !(m.viewOnceViewedBy || []).some(id => id.equals(req.user._id)))) ? { mediaUrl: `/api/conversations/${m.conversation}/media/${encodeURIComponent(m.mediaFilename)}`, mediaType: m.mediaType, fileName: m.mediaOriginalName || m.mediaFilename } : {}), ...(m.viewOnce ? { viewOnce: true, viewOnceViewedByMe: (m.viewOnceViewedBy || []).some(id => id.equals(req.user._id)), viewOnceOpenedCount: (m.viewOnceViewedBy || []).length } : {}), ...(m.storyContext ? { storyContext: { ...m.storyContext, storyId: m.storyContext.storyId?.toString() || '' } } : {}), ...(m.partyInvite ? { partyInvite: m.partyInvite } : {}), ...(m.gameInvite ? { gameInvite: m.gameInvite } : {}), ...(m.callLog ? { callLog: m.callLog } : {}), deliveredAt: m.deliveredAt || null, readAt: m.readAt || null, createdAt: m.createdAt })) })
+  const senderVerified = new Map(senderRows.map(user => [user._id.toString(), !!user.isVerified]))
+  res.json({ hasMore, messages: messages.map(m => ({ id: m._id.toString(), conversationId: m.conversation.toString(), senderId: m.assistantReply ? `assistant:${m.conversation.toString()}` : m.sender.toString(), senderName: m.senderName || senderNames.get(m.sender.toString()) || 'Member', senderVerified: !!senderVerified.get(m.sender.toString()), ...(m.assistantReply ? { assistantReply: true } : {}), ...(m.system ? { system: true } : {}), ...(m.replyTo ? { replyTo: m.replyTo } : {}), text: m.text, ...(m.mediaFilename && (!m.viewOnce || (!m.sender.equals(req.user._id) && !(m.viewOnceViewedBy || []).some(id => id.equals(req.user._id)))) ? { mediaUrl: `/api/conversations/${m.conversation}/media/${encodeURIComponent(m.mediaFilename)}`, mediaType: m.mediaType, fileName: m.mediaOriginalName || m.mediaFilename } : {}), ...(m.viewOnce ? { viewOnce: true, viewOnceViewedByMe: (m.viewOnceViewedBy || []).some(id => id.equals(req.user._id)), viewOnceOpenedCount: (m.viewOnceViewedBy || []).length } : {}), ...(m.storyContext ? { storyContext: { ...m.storyContext, storyId: m.storyContext.storyId?.toString() || '' } } : {}), ...(m.partyInvite ? { partyInvite: m.partyInvite } : {}), ...(m.gameInvite ? { gameInvite: m.gameInvite } : {}), ...(m.callLog ? { callLog: m.callLog } : {}), deliveredAt: m.deliveredAt || null, readAt: m.readAt || null, createdAt: m.createdAt })) })
 }))
 app.post('/api/conversations/:id/messages/sync', auth, handle(async (req, res) => {
   const conversation = await memberConversation(req.params.id, req.user._id)
@@ -1984,7 +2075,7 @@ app.post('/api/conversations/:id/messages', auth, chatUpload.array('media', 5), 
     if (!mongoose.Types.ObjectId.isValid(requestedReplyId)) { removeUploads(); return res.status(400).json({ error: 'That reply is no longer available.' }) }
     const original = await Message.findOne({ _id: requestedReplyId, conversation: conversation._id, hiddenFor: { $ne: req.user._id } }).select('sender senderName text mediaType').lean()
     if (!original) { removeUploads(); return res.status(400).json({ error: 'That reply is no longer available.' }) }
-    const originalSender = await User.findById(original.sender).select('displayName').lean()
+    const originalSender = await User.findById(original.sender).select('displayName isVerified').lean()
     replyTo = { messageId: requestedReplyId, senderId: original.sender.toString(), senderName: original.senderName || originalSender?.displayName || 'Member', text: String(original.text || '').slice(0, 300), mediaType: original.mediaType || '' }
   }
   const notifyConversation = await shouldNotifyMessage(conversation._id)
@@ -1997,7 +2088,7 @@ app.post('/api/conversations/:id/messages', auth, chatUpload.array('media', 5), 
     const mediaFilename = file ? path.basename(file.path) : ''
     const mediaOriginalName = file ? path.basename(file.originalname).replace(/[^A-Za-z0-9_.() -]/g, '_').slice(0, 160) : ''
     const message = await Message.create({ conversation: conversation._id, sender: req.user._id, senderName: req.user.displayName || '', ...(index === 0 && replyTo ? { replyTo } : {}), text: itemText, mediaFilename, mediaOriginalName, ...(mediaType ? { mediaType } : {}), viewOnce, ...(viewOnce ? { viewOnceRecipients: recipientIds } : {}) })
-    const payload = { id: message.id, conversationId: conversation.id, senderId: req.user.id, senderName: message.senderName || req.user.displayName || 'Member', ...(message.replyTo ? { replyTo: message.replyTo } : {}), text: itemText, deliveredAt: null, readAt: null, ...(mediaFilename ? { mediaUrl: '/api/conversations/' + conversation.id + '/media/' + encodeURIComponent(mediaFilename), mediaType, fileName: mediaOriginalName } : {}), ...(viewOnce ? { viewOnce: true, viewOnceViewedByMe: false, viewOnceOpenedCount: 0 } : {}), createdAt: message.createdAt }
+    const payload = { id: message.id, conversationId: conversation.id, senderId: req.user.id, senderName: message.senderName || req.user.displayName || 'Member', senderVerified: !!req.user.isVerified, ...(message.replyTo ? { replyTo: message.replyTo } : {}), text: itemText, deliveredAt: null, readAt: null, ...(mediaFilename ? { mediaUrl: '/api/conversations/' + conversation.id + '/media/' + encodeURIComponent(mediaFilename), mediaType, fileName: mediaOriginalName } : {}), ...(viewOnce ? { viewOnce: true, viewOnceViewedByMe: false, viewOnceOpenedCount: 0 } : {}), createdAt: message.createdAt }
     messages.push(payload)
   }
   const latestText = text || (uploads.length > 1 ? uploads.length + ' photos and videos' : uploads.length ? (mediaTypes[0] === 'video' ? 'Video' : mediaTypes[0] === 'file' ? path.basename(uploads[0].originalname) : 'Photo') : '')
@@ -2097,7 +2188,7 @@ const endLiveSession = (liveId, hostId) => {
   for (const viewerId of live.viewers) io.to(viewerId).emit('live:ended', payload)
   io.to(live.hostId).emit('live:ended', payload)
 }
-const gameSessionPayload = session => ({ id: session.id, game: session.game, status: session.status, hostId: session.hostId, hostName: session.hostName, maxPlayers: session.maxPlayers, invitedIds: session.invitedIds, playerIds: session.playerIds, playerNames: session.playerNames, leftPlayerIds: session.leftPlayerIds || [], leftPlayerId: session.leftPlayerId || null, leftPlayerName: session.leftPlayerName || '', quizDifficulty: session.quizDifficulty, quizTimeLimitMinutes: session.quizTimeLimitMinutes, board: session.board, turn: session.turn, lastRoll: session.lastRoll ?? null, lastRollBy: session.lastRollBy ?? null, winner: session.winner || null, quiz: session.quiz ? { phase: session.quiz.phase, difficulty: session.quiz.difficulty, timeLimitMinutes: session.quiz.timeLimitMinutes, endsAt: session.quiz.endsAt, questionEndsAt: session.quiz.questionEndsAt, questionNumber: session.quiz.questionNumber, question: session.quiz.question ? { prompt: session.quiz.question.prompt, options: session.quiz.question.options } : null, scores: { ...session.quiz.scores }, readyBy: session.quiz.readyBy || [], answeredBy: Object.keys(session.quiz.answersBy || {}) } : undefined })
+const gameSessionPayload = session => ({ id: session.id, game: session.game, status: session.status, hostId: session.hostId, hostName: session.hostName, hostVerified: !!session.playerVerified?.[session.hostId], maxPlayers: session.maxPlayers, invitedIds: session.invitedIds, playerIds: session.playerIds, playerNames: session.playerNames, playerVerified: session.playerVerified || {}, leftPlayerIds: session.leftPlayerIds || [], leftPlayerId: session.leftPlayerId || null, leftPlayerName: session.leftPlayerName || '', quizDifficulty: session.quizDifficulty, quizTimeLimitMinutes: session.quizTimeLimitMinutes, board: session.board, turn: session.turn, lastRoll: session.lastRoll ?? null, lastRollBy: session.lastRollBy ?? null, winner: session.winner || null, quiz: session.quiz ? { phase: session.quiz.phase, difficulty: session.quiz.difficulty, timeLimitMinutes: session.quiz.timeLimitMinutes, endsAt: session.quiz.endsAt, questionEndsAt: session.quiz.questionEndsAt, questionNumber: session.quiz.questionNumber, question: session.quiz.question ? { prompt: session.quiz.question.prompt, options: session.quiz.question.options } : null, scores: { ...session.quiz.scores }, readyBy: session.quiz.readyBy || [], answeredBy: Object.keys(session.quiz.answersBy || {}) } : undefined })
 const makeMathQuizQuestion = difficulty => {
   const int = (min, max) => min + Math.floor(Math.random() * (max - min + 1))
   const pick = values => values[int(0, values.length - 1)]
@@ -2182,9 +2273,9 @@ const markGamePlayerLeft = (session, userId) => {
   for (const playerId of activePlayers) io.to(String(playerId)).emit('game:session', payload)
   void updateGameInviteMessages(session).catch(error => console.error('Game invite update failed:', error.message))
 }
-const partySessionPayload = session => { const snapshotAt = Date.now(); const currentTime = session.currentTime + (session.playing ? Math.max(0, snapshotAt - session.playbackUpdatedAt) / 1000 : 0); return { id: session.id, sessionId: session.id, url: session.url, status: session.status, hostId: session.hostId, hostName: session.hostName, invitedIds: session.invitedIds, participantIds: session.participantIds, controllerIds: [...new Set([session.hostId, ...session.controllerIds])], participants: [...session.members].filter(([id]) => session.participantIds.includes(id)).map(([id, member]) => ({ id, ...member })), currentTime, playing: session.playing, playbackUpdatedAt: snapshotAt, messages: session.messages } }
+const partySessionPayload = session => { const snapshotAt = Date.now(); const currentTime = session.currentTime + (session.playing ? Math.max(0, snapshotAt - session.playbackUpdatedAt) / 1000 : 0); return { id: session.id, sessionId: session.id, url: session.url, status: session.status, hostId: session.hostId, hostName: session.hostName, hostVerified: !!session.members.get(session.hostId)?.isVerified, invitedIds: session.invitedIds, participantIds: session.participantIds, controllerIds: [...new Set([session.hostId, ...session.controllerIds])], participants: [...session.members].filter(([id]) => session.participantIds.includes(id)).map(([id, member]) => ({ id, ...member })), currentTime, playing: session.playing, playbackUpdatedAt: snapshotAt, messages: session.messages } }
 const updatePartyInviteMessages = async session => {
-  const invite = { sessionId: session.id, url: session.url, hostId: session.hostId, hostName: session.hostName, invitedIds: session.invitedIds, participantIds: session.participantIds, controllerIds: session.controllerIds, status: session.status }
+  const invite = { sessionId: session.id, url: session.url, hostId: session.hostId, hostName: session.hostName, hostVerified: !!session.members.get(session.hostId)?.isVerified, invitedIds: session.invitedIds, participantIds: session.participantIds, controllerIds: session.controllerIds, status: session.status }
   for (const ref of session.invites) {
     const message = await Message.findByIdAndUpdate(ref.messageId, { $set: { partyInvite: invite } }, { returnDocument: 'after' })
     if (!message) continue
@@ -2194,7 +2285,7 @@ const updatePartyInviteMessages = async session => {
   }
 }
 const sendPartyInvites = async (session, host, targetIds) => {
-  const invite = { sessionId: session.id, url: session.url, hostId: session.hostId, hostName: session.hostName, invitedIds: session.invitedIds, participantIds: session.participantIds, controllerIds: session.controllerIds, status: session.status }
+  const invite = { sessionId: session.id, url: session.url, hostId: session.hostId, hostName: session.hostName, hostVerified: !!session.members.get(session.hostId)?.isVerified, invitedIds: session.invitedIds, participantIds: session.participantIds, controllerIds: session.controllerIds, status: session.status }
   for (const targetId of targetIds) {
     const members = [session.hostId, targetId].sort()
     const directKey = members.join(':')
@@ -2208,7 +2299,7 @@ const sendPartyInvites = async (session, host, targetIds) => {
 }
 const updateGameInviteMessages = async session => {
   for (const inviteRef of session.invites) {
-    const invite = { sessionId: session.id, game: session.game, status: session.status, hostId: session.hostId, hostName: session.hostName, maxPlayers: session.maxPlayers, invitedIds: session.invitedIds, playerIds: session.playerIds, leftPlayerIds: session.leftPlayerIds || [], leftPlayerId: session.leftPlayerId || null, leftPlayerName: session.leftPlayerName || '', quizDifficulty: session.quizDifficulty, quizTimeLimitMinutes: session.quizTimeLimitMinutes }
+    const invite = { sessionId: session.id, game: session.game, status: session.status, hostId: session.hostId, hostName: session.hostName, hostVerified: !!session.playerVerified?.[session.hostId], maxPlayers: session.maxPlayers, invitedIds: session.invitedIds, playerIds: session.playerIds, leftPlayerIds: session.leftPlayerIds || [], leftPlayerId: session.leftPlayerId || null, leftPlayerName: session.leftPlayerName || '', quizDifficulty: session.quizDifficulty, quizTimeLimitMinutes: session.quizTimeLimitMinutes }
     const message = await Message.findByIdAndUpdate(inviteRef.messageId, { $set: { gameInvite: invite } }, { returnDocument: 'after' })
     if (!message) continue
     const payload = { id: message.id, conversationId: inviteRef.conversationId, senderId: message.sender.toString(), text: message.text, gameInvite: invite, deliveredAt: message.deliveredAt || null, readAt: message.readAt || null, createdAt: message.createdAt }
@@ -2235,7 +2326,7 @@ io.on('connection', async socket => {
     if (!dbReady) return socket.emit('live:error', { message: 'The server is not connected to the database.' })
     try { await warmContentModeration() }
     catch { return socket.emit('live:error', { message: 'Live moderation is unavailable right now, so the broadcast cannot start. Please try again shortly.' }) }
-    const host = await User.findById(socket.userId).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns friends followers')
+    const host = await User.findById(socket.userId).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns friends followers isVerified')
     if (!host) return
     const existing = [...activeLives.values()].find(live => live.hostId === socket.userId)
     if (existing) return socket.emit('live:started', { id: existing.id, host: existing.host, startedAt: existing.startedAt })
@@ -2302,7 +2393,7 @@ io.on('connection', async socket => {
     const live = activeLives.get(String(liveId))
     if (!live || live.hostId === socket.userId || !live.viewers.has(socket.userId)) return socket.emit('live:join-denied', { liveId, message: 'Join the live as a viewer before requesting to join on camera.' })
     if (live.cohostId === socket.userId) return socket.emit('live:join-approved', { liveId: live.id })
-    const requester = await User.findById(socket.userId).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns')
+    const requester = await User.findById(socket.userId).select('username displayName bio avatarUrl avatarBorder avatarBorderColor location website pronouns isVerified')
     if (!requester || activeLives.get(live.id) !== live) return
     live.joinRequests.set(socket.userId, publicUser(requester))
     io.to(live.hostId).emit('live:join-request', { liveId: live.id, user: publicUser(requester) })
@@ -2348,9 +2439,9 @@ io.on('connection', async socket => {
     const now = Date.now()
     if (now - (liveChatLastSent.get(throttleKey) || 0) < 600) return
     liveChatLastSent.set(throttleKey, now)
-    const sender = await User.findById(socket.userId).select('username displayName')
+    const sender = await User.findById(socket.userId).select('username displayName isVerified')
     if (!sender || activeLives.get(live.id) !== live) return
-    const payload = { id: randomUUID(), liveId: live.id, userId: socket.userId, displayName: sender.displayName, username: sender.username, text: message, createdAt: new Date(now).toISOString() }
+    const payload = { id: randomUUID(), liveId: live.id, userId: socket.userId, displayName: sender.displayName, username: sender.username, isVerified: !!sender.isVerified, text: message, createdAt: new Date(now).toISOString() }
     io.to(live.hostId).emit('live:chat', payload)
     for (const viewerId of live.viewers) io.to(viewerId).emit('live:chat', payload)
   })
@@ -2365,13 +2456,13 @@ io.on('connection', async socket => {
     if (!allowedConversation || !await directConversationAllowed(allowedConversation, socket.userId, 'send')) return
     const conversation = await Conversation.findById(conversationId).select('members').lean()
     if (!conversation) return
-    const participants = await User.find({ _id: { $in: conversation.members } }).select('_id displayName blockedUsers').lean()
+    const participants = await User.find({ _id: { $in: conversation.members } }).select('_id displayName isVerified blockedUsers').lean()
     const usersById = new Map(participants.map(user => [user._id.toString(), user]))
     const sender = usersById.get(socket.userId)
     if (!sender) return
     for (const member of conversation.members) {
       const recipientId = member.toString()
-      if (recipientId !== socket.userId && !usersBlockEachOther(socket.userId, recipientId, usersById)) io.to(recipientId).emit('chat:typing', { conversationId: String(conversationId), userId: socket.userId, displayName: sender.displayName || 'Someone', typing })
+      if (recipientId !== socket.userId && !usersBlockEachOther(socket.userId, recipientId, usersById)) io.to(recipientId).emit('chat:typing', { conversationId: String(conversationId), userId: socket.userId, displayName: sender.displayName || 'Someone', isVerified: !!sender.isVerified, typing })
     }
   })
   socket.on('location:share', async ({ conversationId, latitude, longitude, accuracy } = {}) => {
@@ -2404,7 +2495,7 @@ io.on('connection', async socket => {
     if (!dbReady || !['offer','answer','ice','end','mode','renegotiate-offer','renegotiate-answer'].includes(kind) || typeof to !== 'string' || typeof callId !== 'string' || callId.length > 100 || !mongoose.Types.ObjectId.isValid(conversationId)) return
     const conversation = await memberConversation(conversationId, socket.userId)
     if (!conversation || conversation.isGroup || !conversation.members.some(member => member.toString() === to) || to === socket.userId) return socket.emit('call:error', { callId, message: 'This individual call is no longer available.' })
-    const [sender, target] = await Promise.all([User.findById(socket.userId).select('displayName friends blockedUsers reconnectRequired'), User.findById(to).select('friends blockedUsers reconnectRequired messagePrivacy')])
+    const [sender, target] = await Promise.all([User.findById(socket.userId).select('displayName friends blockedUsers reconnectRequired isVerified'), User.findById(to).select('friends blockedUsers reconnectRequired messagePrivacy')])
     if (!sender || !target || !canUseFriendFeatures(sender, target)) {
       const current = activeDirectCalls.get(callId)
       if (current) { activeDirectCalls.delete(callId); pendingDirectIce.delete(callId); io.to(current.callerId).emit('call:signal', { from: socket.userId, kind: 'end', callId, conversationId: current.conversationId }); io.to(current.calleeId).emit('call:signal', { from: socket.userId, kind: 'end', callId, conversationId: current.conversationId }) }
@@ -2466,7 +2557,7 @@ io.on('connection', async socket => {
     if (!dbReady || !['audio','video'].includes(mode) || !mongoose.Types.ObjectId.isValid(conversationId)) return
     const conversation = await memberConversation(conversationId, socket.userId)
     if (!conversation?.isGroup || !await directConversationAllowed(conversation, socket.userId)) return socket.emit('group-call:error', { message: 'Group calls are only available inside an active group chat.' })
-    const caller = await User.findById(socket.userId).select('displayName friends blockedUsers reconnectRequired')
+    const caller = await User.findById(socket.userId).select('displayName friends blockedUsers reconnectRequired isVerified')
     const candidates = conversation.members.map(id => id.toString()).filter(id => id !== socket.userId)
     const users = await User.find({ _id: { $in: candidates } }).select('_id friends blockedUsers reconnectRequired')
     const eligible = candidates.filter(id => {
@@ -2488,7 +2579,7 @@ io.on('connection', async socket => {
       }
     }, 60_000)
     socket.emit('group-call:started', { callId, conversationId: call.conversationId, mode })
-    const callMembers = await User.find({ _id: { $in: conversation.members } }).select('_id displayName')
+    const callMembers = await User.find({ _id: { $in: conversation.members } }).select('_id displayName isVerified')
     const memberNames = conversation.members.map(id => callMembers.find(member => member._id.toString() === id.toString())?.displayName).filter(Boolean)
     const payload = { callId, conversationId: call.conversationId, from: socket.userId, displayName: caller.displayName || 'A group member', groupName: conversation.groupName || 'Group call', memberNames, mode }
     for (const id of eligible) io.to(id).emit('group-call:incoming', payload)
@@ -2546,11 +2637,11 @@ io.on('connection', async socket => {
   socket.on('party:create', async ({ url, userIds } = {}) => {
     try {
       if (!dbReady || typeof url !== 'string' || url.length > 2048 || !/^https:\/\//i.test(url) || !Array.isArray(userIds)) return socket.emit('party:error', { message: 'Add a valid HTTPS video link and choose friends to invite.' })
-      const host = await User.findById(socket.userId).select('username displayName friends')
+      const host = await User.findById(socket.userId).select('username displayName friends isVerified')
       const invited = [...new Set(userIds.map(String))].filter(id => id !== socket.userId).slice(0, 30)
       if (!host || invited.some(id => !host.friends.some(friendId => friendId.toString() === id))) return socket.emit('party:error', { message: 'You can invite accepted friends only.' })
-      const people = await User.find({ _id: { $in: [socket.userId, ...invited] } }).select('displayName username')
-      const members = new Map(people.map(user => [user.id, { displayName: user.displayName, username: user.username }]))
+      const people = await User.find({ _id: { $in: [socket.userId, ...invited] } }).select('displayName username isVerified')
+      const members = new Map(people.map(user => [user.id, { displayName: user.displayName, username: user.username, isVerified: !!user.isVerified }]))
       const session = { id: randomUUID(), url: url.trim(), hostId: socket.userId, hostName: host.displayName, invitedIds: invited, participantIds: [socket.userId], controllerIds: [socket.userId], members, status: 'open', currentTime: 0, playing: true, playbackUpdatedAt: Date.now(), messages: [], invites: [], voicePlayers: new Set() }
       activePartySessions.set(session.id, session)
       socket.join(`party:${session.id}`)
@@ -2562,11 +2653,11 @@ io.on('connection', async socket => {
     try {
       const session = activePartySessions.get(String(sessionId))
       if (!session || session.hostId !== socket.userId || session.status !== 'open' || !Array.isArray(userIds)) return
-      const host = await User.findById(socket.userId).select('displayName friends')
+      const host = await User.findById(socket.userId).select('displayName friends isVerified')
       const additions = [...new Set(userIds.map(String))].filter(id => id !== socket.userId && !session.invitedIds.includes(id)).slice(0, 30 - session.invitedIds.length)
       if (!host || additions.some(id => !host.friends.some(friendId => friendId.toString() === id))) return socket.emit('party:error', { message: 'You can invite accepted friends only.' })
-      const people = await User.find({ _id: { $in: additions } }).select('displayName username')
-      people.forEach(user => session.members.set(user.id, { displayName: user.displayName, username: user.username }))
+      const people = await User.find({ _id: { $in: additions } }).select('displayName username isVerified')
+      people.forEach(user => session.members.set(user.id, { displayName: user.displayName, username: user.username, isVerified: !!user.isVerified }))
       session.invitedIds.push(...additions)
       await sendPartyInvites(session, host, additions)
       io.to(`party:${session.id}`).emit('party:session', partySessionPayload(session))
@@ -2631,9 +2722,9 @@ io.on('connection', async socket => {
     const session = activePartySessions.get(String(sessionId)); const cleanText = typeof text === 'string' ? text.trim().slice(0, 500) : ''
     if (!session || session.status !== 'open' || !session.participantIds.includes(socket.userId) || !cleanText) return
     if (socket.userId !== session.hostId && !await canUseFriendFeaturesIds(session.hostId, socket.userId)) return
-    const user = await User.findById(socket.userId).select('displayName')
+    const user = await User.findById(socket.userId).select('displayName isVerified')
     if (!user) return
-    const message = { id: randomUUID(), sessionId: session.id, userId: socket.userId, displayName: user.displayName, text: cleanText, createdAt: new Date().toISOString() }
+    const message = { id: randomUUID(), sessionId: session.id, userId: socket.userId, displayName: user.displayName, isVerified: !!user.isVerified, text: cleanText, createdAt: new Date().toISOString() }
     session.messages = [...session.messages, message].slice(-100)
     io.to(`party:${session.id}`).emit('party:chat:message', message)
   })
@@ -2662,18 +2753,18 @@ io.on('connection', async socket => {
       const maxPlayers = limits[game]
       if (!dbReady || !maxPlayers || !Array.isArray(userIds)) return socket.emit('game:error', { message: 'Choose a supported game and friends to invite.' })
       if (game === 'math-quiz' && (!['easy','medium','high','extreme'].includes(quizDifficulty) || ![1,2,3,4,5].includes(Number(quizTimeLimitMinutes)))) return socket.emit('game:error', { message: 'Choose a quiz difficulty and a game time from 1 to 5 minutes.' })
-      const host = await User.findById(socket.userId).select('username displayName friends')
+      const host = await User.findById(socket.userId).select('username displayName friends isVerified')
       const invited = [...new Set(userIds.map(String))].filter(id => id !== socket.userId).slice(0, maxPlayers - 1)
       if (!host || !invited.length || invited.some(id => !host.friends.some(friendId => friendId.toString() === id))) return socket.emit('game:error', { message: 'You can invite accepted friends only.' })
       const sessionId = randomUUID()
-      const session = { id: sessionId, game, hostId: socket.userId, hostName: host.displayName, maxPlayers, invitedIds: invited, playerIds: [socket.userId], playerNames: { [socket.userId]: host.displayName }, leftPlayerIds: [], quizDifficulty: game === 'math-quiz' ? quizDifficulty : undefined, quizTimeLimitMinutes: game === 'math-quiz' ? Number(quizTimeLimitMinutes) : undefined, status: 'open', board: game === 'tic-tac-toe' ? Array(9).fill(null) : game === 'chess' ? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR' : game === 'ludo' ? Array.from({length:4},()=>Array(4).fill(0)) : null, turn: 0, ludoRollCount: Array(4).fill(0), ludoSixBoostUsed: Array(4).fill(false), createdAt: new Date().toISOString(), invites: [], chatMessages: [], voicePlayers: new Set(), voiceSockets: new Map() }
+      const session = { id: sessionId, game, hostId: socket.userId, hostName: host.displayName, hostVerified: !!host.isVerified, maxPlayers, invitedIds: invited, playerIds: [socket.userId], playerNames: { [socket.userId]: host.displayName }, playerVerified: { [socket.userId]: !!host.isVerified }, leftPlayerIds: [], quizDifficulty: game === 'math-quiz' ? quizDifficulty : undefined, quizTimeLimitMinutes: game === 'math-quiz' ? Number(quizTimeLimitMinutes) : undefined, status: 'open', board: game === 'tic-tac-toe' ? Array(9).fill(null) : game === 'chess' ? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR' : game === 'ludo' ? Array.from({length:4},()=>Array(4).fill(0)) : null, turn: 0, ludoRollCount: Array(4).fill(0), ludoSixBoostUsed: Array(4).fill(false), createdAt: new Date().toISOString(), invites: [], chatMessages: [], voicePlayers: new Set(), voiceSockets: new Map() }
       activeGameSessions.set(sessionId, session)
       socket.join(`game:${sessionId}`)
       for (const targetId of invited) {
         const members = [socket.userId, targetId].sort()
         const directKey = members.join(':')
         const conversation = await Conversation.findOneAndUpdate({ directKey }, { $setOnInsert: { members, directKey }, $pull: { archivedFor: targetId, hiddenFor: targetId } }, { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true })
-        const invite = { sessionId, game, status: 'open', hostId: socket.userId, hostName: host.displayName, maxPlayers, invitedIds: invited, playerIds: session.playerIds, quizDifficulty: session.quizDifficulty, quizTimeLimitMinutes: session.quizTimeLimitMinutes }
+        const invite = { sessionId, game, status: 'open', hostId: socket.userId, hostName: host.displayName, hostVerified: !!host.isVerified, maxPlayers, invitedIds: invited, playerIds: session.playerIds, quizDifficulty: session.quizDifficulty, quizTimeLimitMinutes: session.quizTimeLimitMinutes }
         const gameName = game === 'tic-tac-toe' ? 'Tic Tac Toe' : game === 'chess' ? 'Chess' : game === 'ludo' ? 'Ludo' : 'Math Quiz'
         const message = await Message.create({ conversation: conversation._id, sender: host._id, text: `Invited you to play ${gameName}${game === 'math-quiz' ? ` (${quizTimeLimitMinutes} min, ${quizDifficulty})` : ''}.`, gameInvite: invite })
         conversation.latestText = message.text; conversation.latestAt = message.createdAt; await conversation.save()
@@ -2694,8 +2785,8 @@ io.on('connection', async socket => {
     if (session.playerIds.includes(socket.userId)) return session.leftPlayerIds?.includes(socket.userId) ? socket.emit('game:error', { message: 'You already left this game.' }) : socket.emit('game:session', gameSessionPayload(session))
     if (session.playerIds.length >= session.maxPlayers) return socket.emit('game:error', { message: 'This game already has all its players.' })
     session.playerIds.push(socket.userId)
-    const arrivingPlayer = await User.findById(socket.userId).select('displayName')
-    session.playerNames[socket.userId] = arrivingPlayer?.displayName || 'A friend'
+    const arrivingPlayer = await User.findById(socket.userId).select('displayName isVerified')
+    session.playerNames[socket.userId] = arrivingPlayer?.displayName || 'A friend'; session.playerVerified[socket.userId] = !!arrivingPlayer?.isVerified
     io.to(session.hostId).emit('game:player:arrived', { sessionId: session.id, userId: socket.userId, displayName: arrivingPlayer?.displayName || 'A friend', playerCount: session.playerIds.length })
     socket.join(`game:${session.id}`)
     socket.emit('game:chat:history', session.chatMessages)
@@ -2820,9 +2911,9 @@ io.on('connection', async socket => {
     if (!session || !['open','started'].includes(session.status) || !session.playerIds.includes(socket.userId) || session.leftPlayerIds?.includes(socket.userId) || !cleanText) return
     const activePeers = session.playerIds.filter(playerId => playerId !== socket.userId && !session.leftPlayerIds?.includes(playerId))
     if (!(await Promise.all(activePeers.map(playerId => canInteractWithoutBlockIds(socket.userId, playerId)))).every(Boolean)) return
-    void User.findById(socket.userId).select('displayName username').then(user => {
+    void User.findById(socket.userId).select('displayName username isVerified').then(user => {
       if (!user || !['open','started'].includes(session.status)) return
-      const line = { id: randomUUID(), sessionId: session.id, userId: socket.userId, displayName: user.displayName, username: user.username, text: cleanText, createdAt: new Date().toISOString() }
+      const line = { id: randomUUID(), sessionId: session.id, userId: socket.userId, displayName: user.displayName, username: user.username, isVerified: !!user.isVerified, text: cleanText, createdAt: new Date().toISOString() }
       session.chatMessages.push(line); if (session.chatMessages.length > 100) session.chatMessages.shift()
       io.to(`game:${session.id}`).emit('game:chat:message', line)
     }).catch(error => console.error('Game chat failed:', error.message))

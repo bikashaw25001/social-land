@@ -1,0 +1,1 @@
+Checkpoint before adding the focused post, Reel, and Note upload state with cancellation.

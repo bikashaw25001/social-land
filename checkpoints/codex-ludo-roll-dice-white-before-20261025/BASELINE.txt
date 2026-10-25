@@ -1,0 +1,1 @@
+Checkpoint before changing the Ludo roll dice label color. Captured src/profile.css.

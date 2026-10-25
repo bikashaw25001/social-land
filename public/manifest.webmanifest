@@ -8,7 +8,7 @@
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f7f8fc",
-  "theme_color": "#796bdd",
+  "theme_color": "#e50b18",
   "categories": ["social", "communication"],
   "icons": [
     {

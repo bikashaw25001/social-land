@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import VerifiedName from './VerifiedName'
 
 type GameKind = 'chess' | 'ludo' | 'tic-tac-toe' | 'math-quiz'
 type GameSession = {
@@ -9,6 +10,7 @@ type GameSession = {
   lastRollBy?: string | null
   status: string
   winner?: string | null
+  playerVerified?: Record<string, boolean>
   quiz?: { phase: 'ready'|'playing'; difficulty: string; timeLimitMinutes: number; endsAt: number|null; questionEndsAt: number|null; questionNumber: number; question: { prompt: string; options: number[] }|null; scores: Record<string, number>; readyBy: string[]; answeredBy: string[] }
 }
 
@@ -17,6 +19,7 @@ type Props = {
   session: GameSession
   userId: string
   names: string[]
+  verified?: Record<string, boolean>
   selected: number | null
   onSelect: (square: number | null) => void
   onMove: (from: number, to: number) => void
@@ -28,13 +31,19 @@ type Props = {
   onReady: () => void
 }
 
-function MathQuizBoard({session,userId,names,onAnswer,onReady}:{session:GameSession;userId:string;names:string[];onAnswer:(answer:number)=>void;onReady:()=>void}) {
+function GamePlayerName({id,session,userId,names,verified}:{id:string;session:GameSession;userId:string;names:string[];verified?:Record<string,boolean>}) {
+  if (id === userId) return <>You</>
+  const index = session.playerIds.indexOf(id)
+  return <VerifiedName name={names[index] || `Player ${index + 1}`} verified={verified?.[id] ?? session.playerVerified?.[id]} />
+}
+
+function MathQuizBoard({session,userId,names,verified,onAnswer,onReady}:{session:GameSession;userId:string;names:string[];verified?:Record<string,boolean>;onAnswer:(answer:number)=>void;onReady:()=>void}) {
   const quiz=session.quiz
   const [now,setNow]=useState(Date.now())
   const [selectedAnswer,setSelectedAnswer]=useState<{question:number;answer:number}|null>(null)
   useEffect(()=>{const timer=window.setInterval(()=>setNow(Date.now()),200);return()=>window.clearInterval(timer)},[])
   if(!quiz)return <section className="game2d-shell game2d-quiz-shell"><header className="game2d-status"><span/><div><b>Preparing your first question</b><small>Get ready to solve it together.</small></div></header></section>
-  if(quiz.phase==='ready')return <section className="game2d-shell game2d-quiz-shell" aria-label="Math quiz ready screen"><header className="game2d-status"><span/><div><b>Both players must be ready</b><small>{quiz.timeLimitMinutes} minute · {quiz.difficulty} difficulty</small></div></header><div className="quiz-ready-card"><div className="quiz-ready-symbol" aria-hidden="true">8</div><h2>Ready to play?</h2><p>The timer and first question begin after both players press Ready.</p><div className="quiz-ready-players">{session.playerIds.slice(0,2).map((id,index)=><span key={id} className={quiz.readyBy.includes(id)?'is-ready':''}><i/>{id===userId?'You':names[index]||`Player ${index+1}`}<small>{quiz.readyBy.includes(id)?'Ready':'Not ready'}</small></span>)}</div><button type="button" className="quiz-ready-button" disabled={quiz.readyBy.includes(userId)} onClick={onReady}>{quiz.readyBy.includes(userId)?'Waiting for the other player':'Ready'}</button></div></section>
+  if(quiz.phase==='ready')return <section className="game2d-shell game2d-quiz-shell" aria-label="Math quiz ready screen"><header className="game2d-status"><span/><div><b>Both players must be ready</b><small>{quiz.timeLimitMinutes} minute · {quiz.difficulty} difficulty</small></div></header><div className="quiz-ready-card"><div className="quiz-ready-symbol" aria-hidden="true">8</div><h2>Ready to play?</h2><p>The timer and first question begin after both players press Ready.</p><div className="quiz-ready-players">{session.playerIds.slice(0,2).map(id=><span key={id} className={quiz.readyBy.includes(id)?'is-ready':''}><i/><GamePlayerName id={id} session={session} userId={userId} names={names} verified={verified}/><small>{quiz.readyBy.includes(id)?'Ready':'Not ready'}</small></span>)}</div><button type="button" className="quiz-ready-button" disabled={quiz.readyBy.includes(userId)} onClick={onReady}>{quiz.readyBy.includes(userId)?'Waiting for the other player':'Ready'}</button></div></section>
   if(!quiz.question||quiz.endsAt===null||quiz.questionEndsAt===null)return <section className="game2d-shell game2d-quiz-shell"><header className="game2d-status"><span/><div><b>Preparing your first question</b><small>Get ready to solve it together.</small></div></header></section>
   const secondsLeft=Math.max(0,Math.ceil((quiz.questionEndsAt-now)/1000))
   const gameSeconds=Math.max(0,Math.ceil((quiz.endsAt-now)/1000))
@@ -42,8 +51,8 @@ function MathQuizBoard({session,userId,names,onAnswer,onReady}:{session:GameSess
   const hasAnswered=quiz.answeredBy.includes(userId)||myAnswer!==null
   const score=quiz.scores||{}
   return <section className="game2d-shell game2d-quiz-shell" aria-label="Math quiz game">
-    <header className="game2d-status"><span className={session.status==='started'?'your-turn':''}/><div><b>{session.status==='ended'?(session.winner?`${names[session.playerIds.indexOf(session.winner)]||'Player'} wins!`:Number(score[session.playerIds[0]]||0)===Number(score[session.playerIds[1]]||0)?'It is a tie!':'Quiz complete'):'Math Quiz'}</b><small>{session.status==='ended'?'Final scores are shown below.':`Question ${quiz.questionNumber} · ${quiz.difficulty} difficulty · ${quiz.timeLimitMinutes} min game`}</small></div></header>
-    <div className="quiz-scoreboard">{session.playerIds.slice(0,2).map((id,index)=><div key={id} className={`quiz-score ${id===userId?'current-player':''}`}><small>{id===userId?'YOU':names[index]||`Player ${index+1}`}</small><b>{Number(score[id]||0)}</b><span>points</span></div>)}<div className="quiz-timer"><small>TIME LEFT</small><b>{Math.floor(gameSeconds/60)}:{String(gameSeconds%60).padStart(2,'0')}</b></div></div>
+    <header className="game2d-status"><span className={session.status==='started'?'your-turn':''}/><div><b>{session.status==='ended'?(session.winner?<><GamePlayerName id={session.winner} session={session} userId={userId} names={names} verified={verified}/> wins!</>:Number(score[session.playerIds[0]]||0)===Number(score[session.playerIds[1]]||0)?'It is a tie!':'Quiz complete'):'Math Quiz'}</b><small>{session.status==='ended'?'Final scores are shown below.':`Question ${quiz.questionNumber} · ${quiz.difficulty} difficulty · ${quiz.timeLimitMinutes} min game`}</small></div></header>
+    <div className="quiz-scoreboard">{session.playerIds.slice(0,2).map(id=><div key={id} className={`quiz-score ${id===userId?'current-player':''}`}><small>{id===userId?'YOU':<GamePlayerName id={id} session={session} userId={userId} names={names} verified={verified}/>}</small><b>{Number(score[id]||0)}</b><span>points</span></div>)}<div className="quiz-timer"><small>TIME LEFT</small><b>{Math.floor(gameSeconds/60)}:{String(gameSeconds%60).padStart(2,'0')}</b></div></div>
     <div className="quiz-question-card"><div className="quiz-question-meta"><span>QUESTION {quiz.questionNumber}</span><b>{session.status==='ended'?'FINISHED':`${secondsLeft}s`}</b></div><h2>{quiz.question.prompt}</h2><div className="quiz-answer-grid">{quiz.question.options.map((option,index)=><button type="button" key={`${quiz.questionNumber}-${index}`} disabled={session.status!=='started'||hasAnswered||secondsLeft===0} className={hasAnswered&&myAnswer===option?'chosen':''} onClick={()=>{setSelectedAnswer({question:quiz.questionNumber,answer:option});onAnswer(option)}}><i>{String.fromCharCode(65+index)}</i><span>{option}</span></button>)}</div><p aria-live="polite">{session.status==='ended'?'The game time is up.':hasAnswered?'Answer locked in. Next question coming up...':secondsLeft===0?'Time is up for this question.':'Choose one answer before the timer runs out.'}</p></div>
   </section>
 }
@@ -127,7 +136,7 @@ function ludoCellClass(row: number, col: number): string {
   return 'ludo-empty'
 }
 
-function LudoBoard({ session, userId, names, onPieceMove, onRoll }: Pick<Props, 'session' | 'userId' | 'names' | 'onPieceMove' | 'onRoll'>) {
+function LudoBoard({ session, userId, names, verified, onPieceMove, onRoll }: Pick<Props, 'session' | 'userId' | 'names' | 'verified' | 'onPieceMove' | 'onRoll'>) {
   const [rollingFace, setRollingFace] = useState<number | null>(null)
   const board = Array.isArray(session.board) ? session.board as number[][] : []
   const playerIndex = session.playerIds.indexOf(userId)
@@ -182,30 +191,29 @@ function LudoBoard({ session, userId, names, onPieceMove, onRoll }: Pick<Props, 
                 </div>
               })}
             </div>
-            <small className="game2d-ludo-home-name">{names[player] || 'Open seat'}</small>
+            <small className="game2d-ludo-home-name">{session.playerIds[player] ? <GamePlayerName id={session.playerIds[player]} session={session} userId={userId} names={names} verified={verified}/> : 'Open seat'}</small>
           </div>
         ))}
       </div>
     </div>
-    <div className="game2d-ludo-footer"><div className="game2d-ludo-players">{session.playerIds.map((id, index) => <span key={id} className={`game2d-player-chip ${ludoColors[index]}`}><i/>{names[index] || `Player ${index + 1}`}</span>)}</div><div className="game2d-dice-area"><span>{session.lastRollBy ? session.lastRollBy === userId ? `You rolled ${session.lastRoll}` : `${names[session.playerIds.indexOf(session.lastRollBy)] || 'Player'} rolled ${session.lastRoll}` : isMyTurn ? 'Your turn - roll the dice' : `${names[session.turn] || 'Player'}'s turn`}</span><button type="button" className={`game2d-dice-button ${rollingFace !== null ? 'rolling' : ''}`} disabled={!isMyTurn || !!session.lastRollBy} onClick={onRoll} aria-label={session.lastRollBy ? `Dice result ${session.lastRoll}` : 'Roll the dice'}>{session.lastRollBy ? <span className="game2d-die-face" aria-hidden="true">{Array.from({ length: 9 }, (_, pip) => <i key={pip} className={dicePips[visibleRoll].includes(pip) ? 'visible' : ''}/>)}</span> : <span className="game2d-die-roll">Roll <small>&#9860;</small></span>}</button></div>
+    <div className="game2d-ludo-footer"><div className="game2d-ludo-players">{session.playerIds.map((id, index) => <span key={id} className={`game2d-player-chip ${ludoColors[index]}`}><i/><GamePlayerName id={id} session={session} userId={userId} names={names} verified={verified}/></span>)}</div><div className="game2d-dice-area"><span>{session.lastRollBy ? session.lastRollBy === userId ? `You rolled ${session.lastRoll}` : <><GamePlayerName id={session.lastRollBy} session={session} userId={userId} names={names} verified={verified}/> rolled {session.lastRoll}</> : isMyTurn ? 'Your turn - roll the dice' : <><GamePlayerName id={session.playerIds[session.turn] || ''} session={session} userId={userId} names={names} verified={verified}/>'s turn</>}</span><button type="button" className={`game2d-dice-button ${rollingFace !== null ? 'rolling' : ''}`} disabled={!isMyTurn || !!session.lastRollBy} onClick={onRoll} aria-label={session.lastRollBy ? `Dice result ${session.lastRoll}` : 'Roll the dice'}>{session.lastRollBy ? <span className="game2d-die-face" aria-hidden="true">{Array.from({ length: 9 }, (_, pip) => <i key={pip} className={dicePips[visibleRoll].includes(pip) ? 'visible' : ''}/>)}</span> : <span className="game2d-die-roll">Roll <small>&#9860;</small></span>}</button></div>
   </div>
     </div>
 }
 
-export default function GameBoard2D({ game, session, userId, names, selected, onSelect, onMove, onPieceMove, onPlace, onRoll, onQuizAnswer, onQuizReady, onReady }: Props) {
+export default function GameBoard2D({ game, session, userId, names, verified, selected, onSelect, onMove, onPieceMove, onPlace, onRoll, onQuizAnswer, onQuizReady, onReady }: Props) {
   const ready = useRef(false)
   useEffect(() => { if (!ready.current) { ready.current = true; onReady() } }, [onReady])
   const currentPlayerIndex = session.turn
-  const currentPlayerName = names[currentPlayerIndex] || 'Player'
   const isMyTurn = session.status === 'started' && session.playerIds[currentPlayerIndex] === userId
 
-  if (game === 'math-quiz') return <MathQuizBoard session={session} userId={userId} names={names} onAnswer={onQuizAnswer} onReady={onQuizReady}/>
+  if (game === 'math-quiz') return <MathQuizBoard session={session} userId={userId} names={names} verified={verified} onAnswer={onQuizAnswer} onReady={onQuizReady}/>
 
-  if (game === 'ludo') return <section className="game2d-shell game2d-ludo-shell" aria-label="Ludo game board"><header className="game2d-status"><span className={isMyTurn ? 'your-turn' : ''}/><div><b>{session.status === 'ended' ? session.winner ? `${names[session.playerIds.indexOf(session.winner)] || 'Player'} wins` : 'Game ended' : isMyTurn ? 'Your turn' : `${currentPlayerName}'s turn`}</b><small>Move your pieces around the board and get all four home.</small></div></header><LudoBoard session={session} userId={userId} names={names} onPieceMove={onPieceMove} onRoll={onRoll}/></section>
+  if (game === 'ludo') return <section className="game2d-shell game2d-ludo-shell" aria-label="Ludo game board"><header className="game2d-status"><span className={isMyTurn ? 'your-turn' : ''}/><div><b>{session.status === 'ended' ? session.winner ? <><GamePlayerName id={session.winner} session={session} userId={userId} names={names} verified={verified}/> wins</> : 'Game ended' : isMyTurn ? 'Your turn' : <><GamePlayerName id={session.playerIds[currentPlayerIndex] || ''} session={session} userId={userId} names={names} verified={verified}/>'s turn</>}</b><small>Move your pieces around the board and get all four home.</small></div></header><LudoBoard session={session} userId={userId} names={names} verified={verified} onPieceMove={onPieceMove} onRoll={onRoll}/></section>
 
   if (game === 'tic-tac-toe') {
     const cells = Array.isArray(session.board) ? session.board as (string | null)[] : Array(9).fill(null)
-    return <section className="game2d-shell game2d-small-board" aria-label="Tic Tac Toe game board"><header className="game2d-status"><span className={isMyTurn ? 'your-turn' : ''}/><div><b>{session.status === 'ended' ? session.winner ? `${names[session.playerIds.indexOf(session.winner)] || 'Player'} wins` : 'Draw game' : isMyTurn ? 'Your turn' : `${currentPlayerName}'s turn`}</b><small>{isMyTurn ? `Place ${session.turn === 0 ? 'X' : 'O'} in an empty square.` : 'Waiting for the other player.'}</small></div></header><div className="game2d-tic-board" role="grid" aria-label="Tic Tac Toe board">{cells.map((cell, index) => <button type="button" role="gridcell" key={index} disabled={!isMyTurn || !!cell} className={`${cell ? `mark-${cell.toLowerCase()}` : ''}`} aria-label={`Square ${index + 1}${cell ? `, ${cell}` : ', empty'}`} onClick={() => onPlace(index)}>{cell}</button>)}</div><footer className="game2d-legend"><span><i className="mark-x">X</i>You</span><span><i className="mark-o">O</i>{names[1] || 'Friend'}</span></footer></section>
+    return <section className="game2d-shell game2d-small-board" aria-label="Tic Tac Toe game board"><header className="game2d-status"><span className={isMyTurn ? 'your-turn' : ''}/><div><b>{session.status === 'ended' ? session.winner ? <><GamePlayerName id={session.winner} session={session} userId={userId} names={names} verified={verified}/> wins</> : 'Draw game' : isMyTurn ? 'Your turn' : <><GamePlayerName id={session.playerIds[currentPlayerIndex] || ''} session={session} userId={userId} names={names} verified={verified}/>'s turn</>}</b><small>{isMyTurn ? `Place ${session.turn === 0 ? 'X' : 'O'} in an empty square.` : 'Waiting for the other player.'}</small></div></header><div className="game2d-tic-board" role="grid" aria-label="Tic Tac Toe board">{cells.map((cell, index) => <button type="button" role="gridcell" key={index} disabled={!isMyTurn || !!cell} className={`${cell ? `mark-${cell.toLowerCase()}` : ''}`} aria-label={`Square ${index + 1}${cell ? `, ${cell}` : ', empty'}`} onClick={() => onPlace(index)}>{cell}</button>)}</div><footer className="game2d-legend"><span><i className="mark-x">X</i>You</span><span><i className="mark-o">O</i>{session.playerIds[1] ? <GamePlayerName id={session.playerIds[1]} session={session} userId={userId} names={names} verified={verified}/> : 'Friend'}</span></footer></section>
   }
 
   const cells = expandChessBoard(session.board)
@@ -213,7 +221,7 @@ export default function GameBoard2D({ game, session, userId, names, selected, on
   const mySide = session.playerIds.indexOf(userId) === 0 ? 'white' : 'black'
   const legalMoves = selected !== null && isMyTurn ? legalChessDestinations(cells, selected, session.playerIds.indexOf(userId)) : new Set<number>()
   const symbols: Record<string, string> = { K: String.fromCodePoint(0x2654), Q: String.fromCodePoint(0x2655), R: String.fromCodePoint(0x2656), B: String.fromCodePoint(0x2657), N: String.fromCodePoint(0x2658), P: String.fromCodePoint(0x2659), k: String.fromCodePoint(0x265a), q: String.fromCodePoint(0x265b), r: String.fromCodePoint(0x265c), b: String.fromCodePoint(0x265d), n: String.fromCodePoint(0x265e), p: String.fromCodePoint(0x265f) }
-  return <section className="game2d-shell game2d-chess-shell" aria-label="Chess game board"><header className="game2d-status"><span className={isMyTurn ? 'your-turn' : ''}/><div><b>{session.status === 'ended' ? session.winner ? `${names[session.playerIds.indexOf(session.winner)] || 'Player'} wins` : 'Game ended' : isMyTurn ? 'Your turn' : `${currentPlayerName}'s turn`}</b><small>{isMyTurn ? `You are playing ${mySide}. Select one of your pieces, then a destination.` : 'Waiting for the other player.'}</small></div></header><div className="game2d-chess-board" role="grid" aria-label="Chess board">{Array.from({ length: 64 }, (_, visualIndex) => {
+  return <section className="game2d-shell game2d-chess-shell" aria-label="Chess game board"><header className="game2d-status"><span className={isMyTurn ? 'your-turn' : ''}/><div><b>{session.status === 'ended' ? session.winner ? <><GamePlayerName id={session.winner} session={session} userId={userId} names={names} verified={verified}/> wins</> : 'Game ended' : isMyTurn ? 'Your turn' : <><GamePlayerName id={session.playerIds[currentPlayerIndex] || ''} session={session} userId={userId} names={names} verified={verified}/>'s turn</>}</b><small>{isMyTurn ? `You are playing ${mySide}. Select one of your pieces, then a destination.` : 'Waiting for the other player.'}</small></div></header><div className="game2d-chess-board" role="grid" aria-label="Chess board">{Array.from({ length: 64 }, (_, visualIndex) => {
     const index = flipped ? 63 - visualIndex : visualIndex
     const row = Math.floor(visualIndex / 8), col = visualIndex % 8
     const piece = cells[index]
@@ -224,5 +232,5 @@ export default function GameBoard2D({ game, session, userId, names, selected, on
       if (isMine) { onSelect(index); return }
       onMove(selected, index)
     }}>{piece ? <span className={`chess-piece ${piece === piece.toUpperCase() ? 'chess-piece-white' : 'chess-piece-black'}`}>{symbols[piece] || piece}</span> : null}</button>
-  })}</div><footer className="game2d-legend"><span><i className="chess-white">{String.fromCodePoint(0x2654)}</i>{names[0] || 'White'}</span><span><i className="chess-black">{String.fromCodePoint(0x265a)}</i>{names[1] || 'Black'}</span></footer></section>
+  })}</div><footer className="game2d-legend"><span><i className="chess-white">{String.fromCodePoint(0x2654)}</i>{session.playerIds[0] ? <GamePlayerName id={session.playerIds[0]} session={session} userId={userId} names={names} verified={verified}/> : names[0] || 'White'}</span><span><i className="chess-black">{String.fromCodePoint(0x265a)}</i>{session.playerIds[1] ? <GamePlayerName id={session.playerIds[1]} session={session} userId={userId} names={names} verified={verified}/> : names[1] || 'Black'}</span></footer></section>
 }

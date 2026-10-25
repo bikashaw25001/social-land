@@ -1,0 +1,6 @@
+Feature: verified account badge and Settings > Account placeholder
+Created: 2026-10-25
+Git HEAD: 8ad6ffed7376d3c40e56365308e0aff7b73770d9
+Files: src/AuthApp.tsx, src/profile.css, src/styles.css, server/index.js
+
+Before editing GameBoard2D.tsx, copied its baseline to src-GameBoard2D.tsx. New src/VerifiedName.tsx was not present at baseline.

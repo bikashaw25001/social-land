@@ -1,0 +1,152 @@
+:root {
+  --purple: #e50b18;
+  --purple-dark: #bf0712;
+  --soft-purple: #fff0f1;
+  --social-primary: #e50b18;
+  --social-primary-strong: #bf0712;
+  --social-primary-soft: #fff0f1;
+  accent-color: var(--social-primary);
+}
+
+::selection {
+  color: #fff;
+  background: var(--social-primary);
+}
+
+.real-app .brand-mark,
+.auth-page .brand-mark,
+.auth-loading .brand-mark {
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+}
+
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.real-app {
+  --purple: #e50b18;
+  --purple-dark: #bf0712;
+  --soft-purple: #fff0f1;
+  --social-primary: #e50b18;
+  --social-primary-strong: #bf0712;
+  --social-primary-soft: #fff0f1;
+  accent-color: var(--social-primary);
+}
+
+.real-app .real-nav.active {
+  background: #fff0f1;
+  color: #bd0712;
+}
+
+.real-app .real-nav i {
+  background: var(--social-primary);
+}
+
+.real-app .real-button:not(.outline) {
+  background: var(--social-primary);
+}
+
+.real-app .real-button:not(.outline):hover {
+  background: var(--social-primary-strong);
+}
+
+.real-app .real-button.outline {
+  border-color: #f0bdc1;
+  color: var(--social-primary-strong);
+}
+
+.real-app .real-button.outline:hover {
+  background: #fff2f3;
+}
+
+.real-app .real-icon.theme-toggle,
+.real-app .profile-section-tabs button.active,
+.real-app .profile-mention,
+.real-app .chat-list-profile-link:hover {
+  color: var(--social-primary-strong);
+}
+
+.real-app .real-message.mine {
+  background: #e50b18;
+  color: #fff;
+}
+
+.real-app .profile-section-tabs button.active:after {
+  background: var(--social-primary);
+}
+
+.real-app .profile-page .profile-section-empty > svg {
+  color: var(--social-primary);
+}
+
+.real-app .profile-section-tabs button.active .profile-tab-count {
+  background: #ffe1e3;
+  color: #bd0712;
+}
+
+.auth-page .auth-submit {
+  background: var(--social-primary);
+  box-shadow: 0 4px 12px #e50b1833;
+}
+
+.auth-page .auth-submit:hover {
+  background: var(--social-primary-strong);
+}
+
+.auth-page .auth-forgot,
+.auth-page .auth-switch button {
+  color: var(--social-primary-strong);
+}
+
+.auth-page.auth-theme-dark .auth-form label>input:focus,
+.auth-page.auth-theme-dark .auth-form .username-field:focus-within,
+.auth-page.auth-theme-dark .auth-form .auth-password-input:focus-within {
+  border-color: var(--social-primary) !important;
+  box-shadow: 0 0 0 3px #e50b182b !important;
+}
+
+.real-app input:focus,
+.real-app textarea:focus,
+.auth-page .auth-form input:focus,
+.auth-page .auth-form textarea:focus {
+  border-color: var(--social-primary);
+  box-shadow: 0 0 0 3px #e50b181f;
+}
+
+.real-app.theme-dark .real-nav.active {
+  background: #3d2025;
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .real-button.outline {
+  border-color: #63323a;
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .real-button.outline:hover {
+  background: #332027;
+}
+
+.real-app.theme-dark .profile-section-tabs button.active {
+  color: #ff9ba3;
+}
+
+.real-app.theme-dark .profile-section-tabs button.active .profile-tab-count {
+  background: #4a252b;
+  color: #ffc0c5;
+}
+
+.real-app.theme-dark .real-message.mine {
+  background: #a91b27;
+  color: #fff;
+}
+
+.real-app.theme-dark input:focus,
+.real-app.theme-dark textarea:focus {
+  box-shadow: 0 0 0 3px #e50b182b;
+}

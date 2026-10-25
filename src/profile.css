@@ -1732,6 +1732,11 @@
 @media(max-width:700px){.real-app.reels-mode .reels-list .social-reel .social-post-media{border-radius:0}.real-app.reels-mode .reels-list .social-reel .social-post-head{top:calc(50% - var(--reel-frame-height)/2 + 58px);left:calc(50% - var(--reel-frame-width)/2 + 8px);right:calc(50% - var(--reel-frame-width)/2 + 62px)}.real-app.reels-mode .reels-list .social-reel .social-post-caption{left:calc(50% - var(--reel-frame-width)/2 + 10px);right:calc(50% - var(--reel-frame-width)/2 + 62px);bottom:calc(50% - var(--reel-frame-height)/2 + 22px)}.real-app.reels-mode .reels-list .social-reel .reel-action-rail{right:calc(50% - var(--reel-frame-width)/2 + 6px);bottom:calc(50% - var(--reel-frame-height)/2 + 55px)}.real-app.reels-mode .reels-list .social-reel .post-comments{right:calc(50% - var(--reel-frame-width)/2 + 52px);bottom:calc(50% - var(--reel-frame-height)/2 + 10px);width:min(380px,calc(var(--reel-frame-width) - 65px))}}
 /* Keep source video proportions inside the Reel viewport. */
 .real-app.reels-mode .reels-list .social-reel .social-post-media>video{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain}
+
+/* Let a Reel keep the video's own dimensions in the viewer and upload preview. */
+.composer-preview.original-reel-preview{display:grid;place-items:center;height:auto;min-height:0;max-height:400px;aspect-ratio:auto!important;background:#08080c}
+.composer-preview.original-reel-preview video{display:block;width:auto;height:auto;max-width:100%;max-height:400px;object-fit:contain;transform:none!important}
+.real-app.reels-mode .reels-list .social-reel .social-post-media>video{display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain}
 .post-comment-thread{display:flex;flex-direction:column;gap:6px}.post-comment-replies-toggle{align-self:flex-start;margin:0 0 3px 47px;padding:3px 7px;border:0;background:transparent;color:#a89bea;font:600 11px 'DM Sans',sans-serif;cursor:pointer}.post-comment-reply-wrap{margin-left:30px;padding-left:9px;border-left:2px solid #7669bf55}.post-comment-reply-mention{padding:0;border:0;background:transparent;color:#a99af2;font:inherit;font-weight:600;cursor:pointer}.post-comment-replies-error{margin-left:47px;color:#ef9ba6;font-size:11px}
 
 .game-choice-card:focus-visible{outline:3px solid #9383e8;outline-offset:2px}
@@ -1987,3 +1992,77 @@
 .profile-showcase .profile-page-identity>.avatar-trigger{grid-area:avatar;align-self:start;margin-top:22px}
 /* Align the display name and username with the separated avatar. */
 .profile-showcase .profile-page-identity>.profile-name-block{align-self:start;margin-top:18px}
+
+/* Swipe left on an activity notification to delete it. */
+.activity-swipe-row{position:relative;overflow:hidden;isolation:isolate;border-bottom:1px solid #f4f3f7;background:#e50b18;touch-action:pan-y}
+.activity-swipe-row>.activity-item{position:relative;z-index:1;width:100%;min-width:0;border-bottom:0;transition:transform .2s cubic-bezier(.2,.75,.25,1);touch-action:pan-y;user-select:none}
+.activity-swipe-row>.activity-item.is-swiping{transition:none}
+.activity-swipe-delete{position:absolute;inset:0 0 0 auto;z-index:0;width:78px;display:flex;align-items:center;justify-content:center;padding:0;border:0;background:linear-gradient(135deg,#f04450,#bf0712);color:#fff;cursor:pointer}
+.activity-swipe-delete>span{display:grid;justify-items:center;gap:4px}
+.activity-swipe-delete small{font:700 9px 'DM Sans',sans-serif}
+.activity-swipe-delete:disabled{opacity:1}
+.activity-swipe-delete:focus-visible{outline:2px solid #fff;outline-offset:-4px}
+.real-app.theme-dark .activity-swipe-row{border-color:#343442;background:#a91b27}
+.real-app.theme-dark .activity-swipe-delete{background:linear-gradient(135deg,#d72a35,#9f1823)}
+.game-result-overlay{z-index:250;align-items:center!important}
+.game-result-dialog{text-align:center}
+.game-result-dialog .game-result-icon{margin:0 auto 15px}
+.game-result-dialog .custom-prompt-eyebrow{display:block}
+.game-result-dialog h2{margin:8px 0 9px}
+.game-result-dialog .custom-prompt-actions{justify-content:center;margin-top:20px}
+.game-result-dialog .custom-prompt-actions button{min-width:150px}
+.game2d-dice-button .game2d-die-roll{color:#fff}
+.post-publishing-indicator{display:block;width:100%;margin:12px auto 18px}
+.post-publishing-card{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:5px 14px;box-sizing:border-box;width:100%;padding:14px 16px;border:1px solid #ffffff20;border-radius:16px;background:#1b1a22;color:#fff;box-shadow:0 10px 28px #0003}
+.post-publishing-spinner{display:grid;width:29px;height:29px;place-items:center;border:2px solid #ffffff27;border-top-color:#f04450;border-right-color:#f04450;border-radius:50%;animation:post-publishing-spin .8s linear infinite}
+.post-publishing-spinner i{width:6px;height:6px;border-radius:50%;background:#f04450;box-shadow:0 0 12px #f0445080}
+.post-publishing-copy{min-width:0}
+.post-publishing-eyebrow{color:#ff9299;font:800 9px 'DM Sans',sans-serif;letter-spacing:1px}
+.post-publishing-card h2{margin:3px 0;color:#fff;font:750 15px/1.25 Manrope,sans-serif}
+.post-publishing-card p{max-width:none;margin:0;color:#c7c4d0;font:400 12px/1.45 'DM Sans',sans-serif}
+.post-publishing-track{grid-column:1/-1;position:relative;overflow:hidden;width:100%;height:6px;margin:6px 0 0;border-radius:99px;background:#ffffff20}
+.post-publishing-track>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f04450,#ff7780);transition:width .2s ease}
+.post-publishing-track>span.is-indeterminate{width:38%;animation:post-publishing-progress 1.25s ease-in-out infinite}
+.post-publishing-progress{color:#aaa7b5;font:600 11px 'DM Sans',sans-serif}
+.post-publishing-cancel{min-width:76px;min-height:34px;padding:0 12px;border:1px solid #ffffff40;border-radius:10px;background:#ffffff0a;color:#fff;font:700 11px 'DM Sans',sans-serif;cursor:pointer}
+.post-publishing-cancel:hover{border-color:#f04450;background:#401a20}
+.post-publishing-cancel:disabled{opacity:.55;cursor:wait}
+@keyframes post-publishing-spin{to{transform:rotate(360deg)}}
+@keyframes post-publishing-progress{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
+@media(prefers-reduced-motion:reduce){.post-publishing-spinner{animation-duration:2s}.post-publishing-track>span.is-indeterminate{animation:none;width:55%}}
+@media(max-width:480px){.post-publishing-card{grid-template-columns:28px minmax(0,1fr);gap:8px 11px;padding:12px;border-radius:14px}.post-publishing-spinner{width:26px;height:26px}.post-publishing-cancel{grid-column:2;justify-self:start}.post-publishing-track{margin-top:2px}.post-publishing-card h2{font-size:14px}}
+
+.profile-crop-overlay{position:fixed;z-index:130;inset:0;display:grid;place-items:center;padding:18px;background:#0b0a12d9;backdrop-filter:blur(7px)}
+.profile-crop-dialog{width:min(560px,100%);max-height:min(92dvh,820px);display:flex;flex-direction:column;overflow:hidden;border:1px solid #41404e;border-radius:18px;background:#191923;color:#f4f3f8;box-shadow:0 24px 90px #0009}
+.profile-crop-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid #343341}
+.profile-crop-dialog>header>span{display:grid;gap:5px}.profile-crop-dialog>header small{color:#aaa7b7;font:800 8px Manrope;letter-spacing:1px}.profile-crop-dialog>header b{color:#f4f3f8;font:800 15px Manrope}.profile-crop-dialog>header button{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:9px;background:#292835;color:#e6e3ef;cursor:pointer}
+.profile-crop-content{min-height:0;overflow:auto;padding:15px 18px 17px}.profile-crop-content>p:first-child{margin:0 0 12px;color:#c2bfcd;font-size:12px;line-height:1.5}
+.profile-crop-frame{position:relative;width:100%;overflow:hidden;margin:0 auto;border:1px solid #5b5969;border-radius:12px;background:#09090d;touch-action:none;cursor:grab;user-select:none}.profile-crop-frame:active{cursor:grabbing}.profile-crop-frame.is-avatar{width:min(76vw,340px);border-radius:10px}.profile-crop-frame.is-avatar:after{position:absolute;z-index:2;inset:0;border:1px solid #ffffffde;border-radius:50%;box-shadow:0 0 0 9999px #0007;content:"";pointer-events:none}.profile-crop-frame.is-banner{max-width:520px}.profile-crop-frame>img{position:absolute;top:50%;left:50%;max-width:none;transform:translate(-50%,-50%);pointer-events:none;user-select:none}
+.profile-crop-zoom{display:grid;gap:8px;margin:17px 0 9px}.profile-crop-zoom>span{display:flex;align-items:center;justify-content:space-between;color:#eceaf2;font-size:11px}.profile-crop-zoom>span small{color:#bbb7c8;font-size:10px}.profile-crop-zoom input{width:100%;accent-color:#ed101c}.profile-crop-content .profile-crop-error{margin:8px 0;color:#ff9ca3;font-size:11px}.profile-crop-tip{display:block;color:#aaa7b7;font-size:10px;line-height:1.5}.profile-crop-dialog>footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px;border-top:1px solid #343341}.profile-crop-dialog>footer .real-button{min-height:38px;font-size:10px}.profile-crop-dialog>footer .real-button.outline{border-color:#484655;background:#262531;color:#e7e4ee}.profile-crop-dialog>footer .real-button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:700px){.profile-crop-overlay{padding:10px}.profile-crop-dialog{max-height:calc(100dvh - 20px);border-radius:16px}.profile-crop-dialog>header{padding:12px 14px}.profile-crop-content{padding:12px 14px 14px}.profile-crop-frame.is-avatar{width:min(74vw,310px)}.profile-crop-dialog>footer{padding:10px 14px calc(12px + env(safe-area-inset-bottom))}}
+/* Match the saved banner crop so CSS cover does not zoom into it again. */
+.profile-showcase .profile-cover{height:auto;min-height:0;aspect-ratio:1280 / 420;background-position:center;background-size:cover}
+.profile-banner-edit{min-height:0;aspect-ratio:1280 / 420;background-position:center;background-size:cover}
+/* The cropper already exports the exact banner bounds; do not crop them again. */
+.profile-showcase .profile-cover{background-size:100% 100%,100% 100%}
+.profile-banner-edit{background-size:100% 100%}
+/* Render the chosen banner crop as an image so profile and edit previews use identical pixels. */
+.profile-showcase .profile-cover{position:relative;isolation:isolate;overflow:hidden}
+.profile-cover-image{position:absolute;inset:0;z-index:-1;display:block;width:100%;height:100%;object-fit:fill;pointer-events:none}
+.profile-banner-edit{position:relative;isolation:isolate;overflow:hidden}
+.profile-banner-edit-preview{position:absolute;inset:0;z-index:-1;display:block;width:100%;height:100%;object-fit:fill;pointer-events:none}
+
+.verified-account-option{padding:12px 13px;border:1px solid #e7e5ed;border-radius:10px;background:#faf9fc}.verified-account-option b{font-size:12px}.verified-account-option small{font-size:10px}.theme-dark .verified-account-option{background:#20202b;border-color:#373744}
+
+.post-like-action{display:inline-flex;align-items:center;gap:2px}.post-actions .post-like-action>button:first-child{padding-inline:8px}.post-actions .post-likes-count,.post-actions .post-likes-count-label{display:inline-flex;align-items:center;min-height:30px;padding:0 5px;border:0;border-radius:7px;background:transparent;color:inherit;font:700 9px 'DM Sans',sans-serif;white-space:nowrap}.post-actions .post-likes-count{cursor:pointer}.post-actions .post-likes-count:hover{background:#ffffff16;color:#fff}.reel-action-rail .post-like-action{flex-direction:column;gap:0}.real-app.reels-mode .reels-list .social-reel .reel-action-rail .post-like-action>button{min-width:42px;min-height:36px;padding:2px}.real-app.reels-mode .reels-list .social-reel .reel-action-rail .post-like-action .post-likes-count{font-size:10px}
+.profile-note-actions .post-likes-count{min-width:34px;height:32px;padding:0 7px;border:1px solid #e8e5f0;border-radius:8px;background:#fff;color:#625d73;box-shadow:0 2px 6px #29243a0a;font:700 11px 'DM Sans',sans-serif;cursor:pointer}.real-app.theme-dark .profile-note-actions .post-likes-count{border-color:#ffffff65;background:#262432a8;color:#eeeaf5}.profile-note-actions .post-likes-count-label{padding:0 6px;font:700 11px 'DM Sans',sans-serif}
+.post-likes-overlay{position:fixed;z-index:1200;inset:0;display:grid;place-items:center;padding:18px;background:#08080dc4;backdrop-filter:blur(7px)}.post-likes-dialog{display:flex;width:min(100%,430px);max-height:min(76dvh,620px);flex-direction:column;overflow:hidden;border:1px solid #393846;border-radius:18px;background:#1c1b25;color:#f8f7fb;box-shadow:0 24px 80px #0009}.post-likes-dialog>header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #393846}.post-likes-dialog>header>span{display:grid;gap:3px}.post-likes-dialog>header b{font:700 16px Manrope,sans-serif}.post-likes-dialog>header small{color:#aaa7b6;font:500 11px 'DM Sans',sans-serif}.post-likes-dialog>header>button{display:grid;width:34px;height:34px;place-items:center;border:1px solid #403e4c;border-radius:10px;background:#282733;color:#f3f0f8;cursor:pointer}.post-likes-list{min-height:100px;overflow:auto;padding:6px 10px}.post-likes-user{display:flex;width:100%;align-items:center;gap:11px;padding:9px 7px;border:0;border-radius:11px;background:transparent;color:inherit;text-align:left;cursor:pointer}.post-likes-user:hover{background:#292833}.post-likes-user>.avatar{width:40px;height:40px;flex:none}.post-likes-user>span:nth-child(2){display:grid;min-width:0;gap:4px}.post-likes-user>span:nth-child(2)>b{font:650 12px 'DM Sans',sans-serif}.post-likes-user>span:nth-child(2)>small{color:#aaa7b6;font:500 10px 'DM Sans',sans-serif}.post-likes-profile-action{margin-left:auto;color:#ff6673;font:600 10px 'DM Sans',sans-serif}.post-likes-state,.post-likes-error{display:flex;min-height:86px;align-items:center;justify-content:center;gap:9px;margin:0;color:#b9b6c2;font:500 12px 'DM Sans',sans-serif}.post-likes-state>i{width:16px;height:16px;border:2px solid #77727f;border-top-color:#f04452;border-radius:50%;animation:post-likes-spin .7s linear infinite}.post-likes-error{color:#ff8994}.post-likes-more{align-self:center;margin:0 0 14px;padding:9px 20px;border:1px solid #e31b2b;border-radius:10px;background:#d91022;color:#fff;font:650 11px 'DM Sans',sans-serif;cursor:pointer}.post-likes-more:disabled{opacity:.65;cursor:wait}@keyframes post-likes-spin{to{transform:rotate(360deg)}}@media(max-width:600px){.post-likes-overlay{padding:12px}.post-likes-dialog{max-height:min(70dvh,560px);border-radius:16px}.post-likes-profile-action{display:none}}
+
+
+/* Notes share the post like control layout and count treatment. */
+.profile-note-actions .note-like-action,.feed-note-card>footer .note-like-action{display:inline-flex;align-items:center;gap:2px}
+.profile-note-actions .note-like-action>button:first-child,.feed-note-card>footer .note-like-action>button:first-child{display:inline-flex;align-items:center;justify-content:center;min-width:34px;min-height:32px;height:32px;padding:0 8px;border:0;border-radius:8px;background:transparent;color:inherit;box-shadow:none;font:inherit;cursor:pointer}
+.profile-note-actions .note-like-action .post-likes-count,.profile-note-actions .note-like-action .post-likes-count-label,.feed-note-card>footer .note-like-action .post-likes-count,.feed-note-card>footer .note-like-action .post-likes-count-label{display:inline-flex;align-items:center;min-height:32px;padding:0 5px;border:0;border-radius:7px;background:transparent;color:inherit;box-shadow:none;font:700 11px 'DM Sans',sans-serif;white-space:nowrap}
+.profile-note-actions .note-like-action .post-likes-count,.feed-note-card>footer .note-like-action .post-likes-count{cursor:pointer}
+.profile-note-actions .note-like-action .post-likes-count:hover,.feed-note-card>footer .note-like-action .post-likes-count:hover{background:#ffffff18}
+.profile-note-actions .note-like-action .post-liked,.feed-note-card>footer .note-like-action .post-liked{color:#e11d48!important}

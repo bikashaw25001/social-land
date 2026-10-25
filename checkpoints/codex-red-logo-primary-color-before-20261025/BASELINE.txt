@@ -1,0 +1,5 @@
+Checkpoint: red logo and primary color update
+Git baseline commit: 
+8ad6ffed7376d3c40e56365308e0aff7b73770d9
+No Git checkpoint branch was created; restore the copied files in this folder or return to the baseline commit.
+Snapshot: app entry, auth UI, CSS, HTML metadata, manifest, service worker, and existing PWA icons

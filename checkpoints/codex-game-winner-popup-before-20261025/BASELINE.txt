@@ -1,0 +1,1 @@
+Checkpoint before game winner popup and delayed return changes. Captured src/AuthApp.tsx and src/profile.css.
