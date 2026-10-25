@@ -1,0 +1,4 @@
+﻿Checkpoint created before Reel playback/UI edits.
+Baseline commit: 
+6e225aa5d1b980dd9cac5051969b25b76bf17409
+Captured: src/AuthApp.tsx, src/profile.css

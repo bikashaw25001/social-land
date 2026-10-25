@@ -2066,3 +2066,18 @@
 .profile-note-actions .note-like-action .post-likes-count,.feed-note-card>footer .note-like-action .post-likes-count{cursor:pointer}
 .profile-note-actions .note-like-action .post-likes-count:hover,.feed-note-card>footer .note-like-action .post-likes-count:hover{background:#ffffff18}
 .profile-note-actions .note-like-action .post-liked,.feed-note-card>footer .note-like-action .post-liked{color:#e11d48!important}
+
+/* Full viewport Reel stage, adaptive player controls, and reference-style navigation. */
+.real-app.reels-mode .reel-viewer-top .reel-title{display:grid;flex:1;min-width:0;gap:2px;color:#fff}
+.real-app.reels-mode .reel-viewer-top .reel-title>b{font:800 15px/1.15 Manrope,sans-serif}
+.real-app.reels-mode .reel-viewer-top .reel-title>small{color:#e0dce8;font:600 10px/1.2 'DM Sans',sans-serif}
+.real-app.reels-mode .reels-list>.social-reel{--reel-frame-width:100vw;--reel-frame-height:100dvh;width:100vw;height:100dvh;min-height:100dvh;max-height:100dvh}
+.real-app.reels-mode .reels-list .social-reel .social-post-media{top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;transform:none;border-radius:0;background:#08080c}
+.real-app.reels-mode .reels-list .social-reel .social-post-media>video{display:block;width:100%;height:100%;max-width:100%;max-height:100%;min-height:0;object-fit:contain;object-position:center;background:#08080c}
+.real-app.reels-mode .real-mobile-nav{z-index:125;background:linear-gradient(180deg,#09090d58,#09090df2);border-color:#ffffff25;backdrop-filter:blur(12px)}
+.real-app.reels-mode .real-mobile-nav button,.real-app.reels-mode .real-mobile-nav button.active{color:#fff}
+.real-app.reels-mode .real-mobile-nav button.active .real-nav-icon{color:#fff}
+.real-app.reels-mode .social-reel:fullscreen{position:fixed!important;inset:0;z-index:2147483647;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;overflow:hidden;background:#08080c}
+.real-app.reels-mode .social-reel:fullscreen .social-post-media{top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;transform:none;border-radius:0}
+.real-app.reels-mode .social-reel:fullscreen .social-post-media>video{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain}
+@media(orientation:landscape){.real-app.reels-mode .reels-list>.social-reel{--reel-frame-width:100vw;--reel-frame-height:100dvh}.real-app.reels-mode .reels-list .social-reel .social-post-media{width:100vw;height:100dvh}.real-app.reels-mode .reels-list .social-reel .social-post-media>video{width:100%;height:100%;object-fit:contain}}
