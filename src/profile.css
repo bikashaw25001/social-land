@@ -2083,3 +2083,6 @@
 
 
 @keyframes post-carousel-media-enter{from{opacity:.72;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}.post-carousel-media{animation:post-carousel-media-enter .18s ease-out both}
+.social-post-media.has-carousel{height:min(75vh,620px);min-height:180px;max-height:620px}
+.social-post-media.has-carousel>img,.social-post-media.has-carousel>video{width:100%;height:100%;max-width:100%;max-height:100%;min-height:0;object-fit:contain}
+@media(max-width:700px){.social-post-media.has-carousel{height:min(67vh,560px);min-height:180px}}
