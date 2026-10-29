@@ -11,7 +11,7 @@ type GameSession = {
   status: string
   winner?: string | null
   playerVerified?: Record<string, boolean>
-  quiz?: { phase: 'ready'|'playing'; difficulty: string; timeLimitMinutes: number; endsAt: number|null; questionEndsAt: number|null; questionNumber: number; question: { prompt: string; options: number[] }|null; scores: Record<string, number>; readyBy: string[]; answeredBy: string[] }
+  quiz?: { phase: 'ready'|'playing'; difficulty: string; timeLimitMinutes: number; serverNow?: number; endsAt: number|null; questionEndsAt: number|null; questionNumber: number; question: { prompt: string; options: number[] }|null; scores: Record<string, number>; readyBy: string[]; answeredBy: string[] }
 }
 
 type Props = {
@@ -40,13 +40,16 @@ function GamePlayerName({id,session,userId,names,verified}:{id:string;session:Ga
 function MathQuizBoard({session,userId,names,verified,onAnswer,onReady}:{session:GameSession;userId:string;names:string[];verified?:Record<string,boolean>;onAnswer:(answer:number)=>void;onReady:()=>void}) {
   const quiz=session.quiz
   const [now,setNow]=useState(Date.now())
+  const [serverOffset,setServerOffset]=useState(0)
   const [selectedAnswer,setSelectedAnswer]=useState<{question:number;answer:number}|null>(null)
   useEffect(()=>{const timer=window.setInterval(()=>setNow(Date.now()),200);return()=>window.clearInterval(timer)},[])
+  useEffect(()=>{if(Number.isFinite(quiz?.serverNow))setServerOffset((quiz?.serverNow as number)-Date.now())},[quiz?.serverNow])
   if(!quiz)return <section className="game2d-shell game2d-quiz-shell"><header className="game2d-status"><span/><div><b>Preparing your first question</b><small>Get ready to solve it together.</small></div></header></section>
   if(quiz.phase==='ready')return <section className="game2d-shell game2d-quiz-shell" aria-label="Math quiz ready screen"><header className="game2d-status"><span/><div><b>Both players must be ready</b><small>{quiz.timeLimitMinutes} minute · {quiz.difficulty} difficulty</small></div></header><div className="quiz-ready-card"><div className="quiz-ready-symbol" aria-hidden="true">8</div><h2>Ready to play?</h2><p>The timer and first question begin after both players press Ready.</p><div className="quiz-ready-players">{session.playerIds.slice(0,2).map(id=><span key={id} className={quiz.readyBy.includes(id)?'is-ready':''}><i/><GamePlayerName id={id} session={session} userId={userId} names={names} verified={verified}/><small>{quiz.readyBy.includes(id)?'Ready':'Not ready'}</small></span>)}</div><button type="button" className="quiz-ready-button" disabled={quiz.readyBy.includes(userId)} onClick={onReady}>{quiz.readyBy.includes(userId)?'Waiting for the other player':'Ready'}</button></div></section>
   if(!quiz.question||quiz.endsAt===null||quiz.questionEndsAt===null)return <section className="game2d-shell game2d-quiz-shell"><header className="game2d-status"><span/><div><b>Preparing your first question</b><small>Get ready to solve it together.</small></div></header></section>
-  const secondsLeft=Math.max(0,Math.ceil((quiz.questionEndsAt-now)/1000))
-  const gameSeconds=Math.max(0,Math.ceil((quiz.endsAt-now)/1000))
+  const serverNow=now+serverOffset
+  const secondsLeft=Math.max(0,Math.ceil((quiz.questionEndsAt-serverNow)/1000))
+  const gameSeconds=Math.max(0,Math.ceil((quiz.endsAt-serverNow)/1000))
   const myAnswer=selectedAnswer?.question===quiz.questionNumber?selectedAnswer.answer:null
   const hasAnswered=quiz.answeredBy.includes(userId)||myAnswer!==null
   const score=quiz.scores||{}

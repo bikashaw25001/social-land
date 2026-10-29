@@ -250,3 +250,5 @@
 
 
 .verified-name{display:inline-flex;align-items:center;gap:.2em;vertical-align:middle}.verified-badge-icon{display:inline-block;width:1em;height:1em;flex:0 0 1em;color:#ed1024;vertical-align:-.12em}
+
+@media(max-width:700px){.auth-mobile-footer{left:0;width:100%;box-sizing:border-box;padding:0 12px;text-align:center;white-space:nowrap;font-size:9px;line-height:1.4}}
